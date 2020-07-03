@@ -1,23 +1,29 @@
-package org.sqlite.database;
+package org.sqlite.database.wrapper;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.CancellationSignal;
 import android.util.Pair;
 
-import org.sqlite.database.sqlite.SQLiteCursorDriver;
-import org.sqlite.database.sqlite.SQLiteDatabase;
-import org.sqlite.database.sqlite.SQLiteQuery;
-
 import java.util.List;
 import java.util.Locale;
 
-public interface SQLiteDatabaseWrapper {
-    interface CursorFactoryWrapper {
-        Cursor newCursor(SQLiteDatabaseWrapper db,
-                         SQLiteCursorDriverWrapper masterQuery, String editTable,
-                         SQLiteQueryWrapper query);
+public interface SQLiteDatabaseWrapper<
+        SQLiteDatabaseType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType
+        > {
+    interface CursorFactoryWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > {
+        Cursor newCursor(SQLiteDatabaseType db,
+                         SQLiteCursorDriverType masterQuery, String editTable,
+                         SQLiteQueryType query);
     }
+
+    void close();
 
     void beginTransaction();
     void beginTransactionNonExclusive();
@@ -42,14 +48,24 @@ public interface SQLiteDatabaseWrapper {
     Cursor query(boolean distinct, String table, String[] columns,
                  String selection, String[] selectionArgs, String groupBy,
                  String having, String orderBy, String limit, CancellationSignal cancellationSignal);
-    Cursor queryWithFactory(CursorFactoryWrapper cursorFactory,
-                            boolean distinct, String table, String[] columns,
-                            String selection, String[] selectionArgs, String groupBy,
-                            String having, String orderBy, String limit);
-    Cursor queryWithFactory(CursorFactoryWrapper cursorFactory,
-                            boolean distinct, String table, String[] columns,
-                            String selection, String[] selectionArgs, String groupBy,
-                            String having, String orderBy, String limit, CancellationSignal cancellationSignal);
+    Cursor queryWithFactory(
+            CursorFactoryWrapper<
+                    SQLiteDatabaseType,
+                    SQLiteCursorDriverType,
+                    SQLiteQueryType
+                    > cursorFactory,
+            boolean distinct, String table, String[] columns,
+            String selection, String[] selectionArgs, String groupBy,
+            String having, String orderBy, String limit);
+    Cursor queryWithFactory(
+            CursorFactoryWrapper<
+                    SQLiteDatabaseType,
+                    SQLiteCursorDriverType,
+                    SQLiteQueryType
+                    > cursorFactory,
+            boolean distinct, String table, String[] columns,
+            String selection, String[] selectionArgs, String groupBy,
+            String having, String orderBy, String limit, CancellationSignal cancellationSignal);
     Cursor query(String table, String[] columns, String selection,
                  String[] selectionArgs, String groupBy, String having,
                  String orderBy);
@@ -60,10 +76,18 @@ public interface SQLiteDatabaseWrapper {
     Cursor rawQuery(String sql, String[] selectionArgs,
                     CancellationSignal cancellationSignal);
     Cursor rawQueryWithFactory(
-            CursorFactoryWrapper cursorFactory, String sql, String[] selectionArgs,
+            CursorFactoryWrapper<
+                    SQLiteDatabaseType,
+                    SQLiteCursorDriverType,
+                    SQLiteQueryType
+                    > cursorFactory, String sql, String[] selectionArgs,
             String editTable);
     Cursor rawQueryWithFactory(
-            CursorFactoryWrapper cursorFactory, String sql, String[] selectionArgs,
+            CursorFactoryWrapper<
+                    SQLiteDatabaseType,
+                    SQLiteCursorDriverType,
+                    SQLiteQueryType
+                    > cursorFactory, String sql, String[] selectionArgs,
             String editTable, CancellationSignal cancellationSignal);
     long insert(String table, String nullColumnHack, ContentValues values);
     long insertOrThrow(String table, String nullColumnHack, ContentValues values)

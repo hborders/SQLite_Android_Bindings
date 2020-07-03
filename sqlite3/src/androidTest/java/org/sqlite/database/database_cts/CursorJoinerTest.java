@@ -21,12 +21,19 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorJoiner;
 import android.database.CursorJoiner.Result;
-import org.sqlite.database.sqlite.SQLiteDatabase;
+
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+
 import android.test.AndroidTestCase;
 
 import java.io.File;
 
-public class CursorJoinerTest extends AndroidTestCase {
+public abstract class CursorJoinerTest<
+        SQLiteDatabaseType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType
+        > extends AndroidTestCase {
 
     private static final int TEST_ITEM_COUNT = 10;
     private static final int DEFAULT_TABLE1_VALUE_BEGINS = 1;
@@ -41,7 +48,11 @@ public class CursorJoinerTest extends AndroidTestCase {
     private static final String TABLE1_COLUMNS = " number TEXT";
     private static final String TABLE2_COLUMNS = " number TEXT, int_number INTEGER";
 
-    private SQLiteDatabase mDatabase;
+    private SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
     private File mDatabaseFile;
 
     @Override
@@ -58,7 +69,7 @@ public class CursorJoinerTest extends AndroidTestCase {
         super.tearDown();
     }
 
-    public void testCursorJoinerAndIterator() {
+    public void testCursorJoinerAndIterator() throws SQLExceptionWrapper {
         Cursor cursor1 = getCursor(TABLE_NAME_1, null, null);
         Cursor cursor2 = getCursor(TABLE_NAME_2, null, null);
         // Test with different length ColumenNAmes
@@ -191,7 +202,7 @@ public class CursorJoinerTest extends AndroidTestCase {
         return placeHolders + Integer.toString(value);
     }
 
-    private void initializeTables() {
+    private void initializeTables() throws SQLExceptionWrapper {
         // Add 1 to 7 into Table1
         addValuesIntoTable(TABLE_NAME_1, DEFAULT_TABLE1_VALUE_BEGINS,
                 DEFAULT_TABLE1_VALUE_BEGINS + UNIQUE_COUNT - 1);
@@ -204,13 +215,19 @@ public class CursorJoinerTest extends AndroidTestCase {
         addValuesIntoTable(TABLE_NAME_2, DEFAULT_TABLE2_VALUE_BEGINS + UNIQUE_COUNT, MAX_VALUE);
     }
 
-    private void setupDatabase() {
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(String path);
+
+    private void setupDatabase() throws SQLExceptionWrapper {
         File dbDir = getContext().getDir("tests", Context.MODE_PRIVATE);
         mDatabaseFile = new File(dbDir, "database_test.db");
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();
         }
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null);
+        mDatabase = openOrCreateDatabase(mDatabaseFile.getPath());
         assertNotNull(mDatabaseFile);
         createTable(TABLE_NAME_1, TABLE1_COLUMNS);
         createTable(TABLE_NAME_2, TABLE2_COLUMNS);
@@ -224,24 +241,24 @@ public class CursorJoinerTest extends AndroidTestCase {
         }
     }
 
-    private void createTable(String tableName, String columnNames) {
+    private void createTable(String tableName, String columnNames) throws SQLExceptionWrapper {
         String sql = "Create TABLE " + tableName + " (_id INTEGER PRIMARY KEY, " + columnNames
                 + " );";
         mDatabase.execSQL(sql);
     }
 
-    private void addValuesIntoTable(String tableName, int start, int end) {
+    private void addValuesIntoTable(String tableName, int start, int end) throws SQLExceptionWrapper {
         for (int i = start; i <= end; i++) {
             mDatabase.execSQL("INSERT INTO " + tableName + "(number) VALUES ('"
                     + getOrderNumberString(i, MAX_VALUE) + "');");
         }
     }
 
-    private void addValueIntoTable(String tableName, String value) {
+    private void addValueIntoTable(String tableName, String value) throws SQLExceptionWrapper {
         mDatabase.execSQL("INSERT INTO " + tableName + "(number) VALUES ('" + value + "');");
     }
 
-    private void deleteValueFromTable(String tableName, String value) {
+    private void deleteValueFromTable(String tableName, String value) throws SQLExceptionWrapper {
         mDatabase.execSQL("DELETE FROM " + tableName + " WHERE number = '" + value + "';");
     }
 

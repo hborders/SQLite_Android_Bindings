@@ -1,4 +1,4 @@
-package org.sqlite.database;
+package org.sqlite.database.wrapper;
 
 public interface SQLiteTransactionListenerWrapper {
     void onBegin();

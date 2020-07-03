@@ -1,6 +1,4 @@
-package org.sqlite.database;
-
-import org.sqlite.database.sqlite.SQLiteException;
+package org.sqlite.database.wrapper;
 
 public class SQLExceptionWrapper extends Exception {
     final android.database.SQLException androidSQLException;

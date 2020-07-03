@@ -25,6 +25,9 @@ import android.database.CursorWrapper;
 import android.database.DataSetObserver;
 import android.database.StaleDataException;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.test.AndroidTestCase;
@@ -32,7 +35,11 @@ import android.test.AndroidTestCase;
 import java.io.File;
 import java.util.Arrays;
 
-public class CursorWrapperTest extends AndroidTestCase {
+public abstract class CursorWrapperTest<
+        SQLiteDatabaseType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType
+        > extends AndroidTestCase {
 
     private static final String FIRST_NUMBER = "123";
     private static final String SECOND_NUMBER = "5555";
@@ -45,7 +52,11 @@ public class CursorWrapperTest extends AndroidTestCase {
     private static final int DEFAULT_RECORD_COUNT = 2;
     private static final int DEFAULT_COLUMN_COUNT = 2;
 
-    private SQLiteDatabase mDatabase;
+    private SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
     private File mDatabaseFile;
     private Cursor mCursor;
 
@@ -84,7 +95,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         return cursor;
     }
 
-    public void testGetCount() {
+    public void testGetCount() throws SQLExceptionWrapper {
         CursorWrapper cursorWrapper = new CursorWrapper(getCursor());
         int defaultCount = cursorWrapper.getCount();
 
@@ -281,7 +292,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         cursorWrapper.close();
     }
 
-    public void testGettingValues() {
+    public void testGettingValues() throws SQLExceptionWrapper {
         final byte NUMBER_BLOB_UNIT = 99;
         final String STRING_TEXT = "Test String";
         final String STRING_TEXT2 = "Test String2";
@@ -457,19 +468,38 @@ public class CursorWrapperTest extends AndroidTestCase {
         }
     }
 
-    private void deleteWithValue(SQLiteDatabase database, int value) {
+    private void deleteWithValue(
+            SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > database, int value) throws SQLExceptionWrapper {
         database.execSQL("DELETE FROM test1 WHERE number = " + value + ";");
     }
 
-    private void addWithValue(SQLiteDatabase database, int value) {
+    private void addWithValue(SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > database, int value) throws SQLExceptionWrapper {
         database.execSQL("INSERT INTO test1 (number) VALUES ('" + value + "');");
     }
 
-    private void deleteAllRecords(SQLiteDatabase database) {
+    private void deleteAllRecords(
+            SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType> database) {
         database.delete("test1", null, null);
     }
 
-    private void setupDatabase() {
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(String path);
+
+    private void setupDatabase() throws SQLExceptionWrapper {
         File dbDir = getContext().getDir("tests", Context.MODE_PRIVATE);
         /* don't use the same database name as the one in super class
          * this class's setUp() method deletes a database file just opened by super.setUp().
@@ -485,7 +515,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();
         }
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null);
+        mDatabase = openOrCreateDatabase(mDatabaseFile.getPath());
         assertNotNull(mDatabase);
         mDatabase.setVersion(CURRENT_DATABASE_VERSION);
         mDatabase.execSQL("CREATE TABLE test1 (_id INTEGER PRIMARY KEY, number TEXT);");
@@ -503,7 +533,7 @@ public class CursorWrapperTest extends AndroidTestCase {
         mDatabaseFile.delete();
     }
 
-    private void rebuildDatabase() {
+    private void rebuildDatabase() throws SQLExceptionWrapper {
         closeDatabase();
         setupDatabase();
     }

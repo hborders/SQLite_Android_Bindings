@@ -24,6 +24,9 @@ import android.database.CursorIndexOutOfBoundsException;
 import android.database.CursorWindow;
 import android.database.DataSetObserver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -36,7 +39,11 @@ import java.util.Random;
 /**
  * Test {@link AbstractCursor}.
  */
-public class AbstractCursorTest extends InstrumentationTestCase {
+public abstract class AbstractCursorTest<
+        SQLiteDatabaseType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType
+        > extends InstrumentationTestCase {
     private static final int POSITION0 = 0;
     private static final int POSITION1 = 1;
     private  static final int ROW_MAX = 10;
@@ -49,7 +56,11 @@ public class AbstractCursorTest extends InstrumentationTestCase {
     private TestAbstractCursor mTestAbstractCursor;
     private Object mLockObj = new Object();
 
-    private SQLiteDatabase mDatabase;
+    private SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > mDatabase;
     private File mDatabaseFile;
     private AbstractCursor mDatabaseCursor;
 
@@ -414,14 +425,21 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         return list;
     }
 
-    private void setupDatabase() {
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(String path);
+
+    private void setupDatabase() throws SQLExceptionWrapper {
         File dbDir = getInstrumentation().getTargetContext().getDir("tests",
                 Context.MODE_PRIVATE);
         mDatabaseFile = new File(dbDir, "database_test.db");
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();
         }
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null);
+        mDatabase = openOrCreateDatabase(mDatabaseFile.getPath());
+//        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null);
         assertNotNull(mDatabaseFile);
         mDatabase.execSQL("CREATE TABLE test1 (_id INTEGER PRIMARY KEY, number TEXT);");
         generateData();
@@ -429,7 +447,7 @@ public class AbstractCursorTest extends InstrumentationTestCase {
                 null);
     }
 
-    private void generateData() {
+    private void generateData() throws SQLExceptionWrapper {
         for ( int i = 0; i < DATA_COUNT; i++) {
             mDatabase.execSQL("INSERT INTO test1 (number) VALUES ('" + i + "');");
         }
