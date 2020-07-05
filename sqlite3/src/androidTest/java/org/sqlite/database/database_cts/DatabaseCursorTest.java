@@ -28,6 +28,9 @@ import org.sqlite.database.sqlite.SQLiteCursorDriver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 import org.sqlite.database.sqlite.SQLiteQuery;
 import org.sqlite.database.sqlite.SQLiteStatement;
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+
 import android.os.Looper;
 import android.test.AndroidTestCase;
 import android.test.PerformanceTestCase;
@@ -39,17 +42,32 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Random;
 
-public class DatabaseCursorTest extends AndroidTestCase implements PerformanceTestCase {
+public abstract class DatabaseCursorTest<
+        SQLiteDatabaseType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType,
+        SQLiteCursorType
+        > extends AndroidTestCase implements PerformanceTestCase {
     private static final String sString1 = "this is a test";
     private static final String sString2 = "and yet another test";
     private static final String sString3 = "this string is a little longer, but still a test";
 
     private static final int CURRENT_DATABASE_VERSION = 42;
-    private SQLiteDatabase mDatabase;
+    private SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
     private File mDatabaseFile;
     protected static final int TYPE_CURSOR = 0;
     protected static final int TYPE_CURSORWRAPPER = 1;
     private int  mTestType = TYPE_CURSOR;
+
+    protected abstract SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > openOrCreateDatabase(String path);
 
     @Override
     protected void setUp() throws Exception {
@@ -60,7 +78,7 @@ public class DatabaseCursorTest extends AndroidTestCase implements PerformanceTe
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();
         }
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null);
+        mDatabase = openOrCreateDatabase(mDatabaseFile.getPath());
         assertNotNull(mDatabase);
         mDatabase.setVersion(CURRENT_DATABASE_VERSION);
     }
@@ -95,7 +113,7 @@ public class DatabaseCursorTest extends AndroidTestCase implements PerformanceTe
         return 1;
     }
 
-    private void populateDefaultTable() {
+    private void populateDefaultTable() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, data TEXT);");
 
         mDatabase.execSQL("INSERT INTO test (data) VALUES ('" + sString1 + "');");
@@ -464,6 +482,24 @@ public class DatabaseCursorTest extends AndroidTestCase implements PerformanceTe
         testCursor.close();
     }
 
+    protected interface SetSelectionArguments {
+        void setSelectionArguments(String[] arguments);
+    }
+
+    protected interface BeforeRequery<SQLiteCursorType> {
+        void beforeRequery(SQLiteCursorType cursor);
+    }
+
+    protected abstract SetSelectionArguments createSetSelectionArguments(
+            SQLiteCursorType cursor
+    );
+
+    protected abstract SQLiteDatabaseWrapper.CursorFactoryWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > createCursorFactory(BeforeRequery<SQLiteCursorType> beforeRequery);
+
     @MediumTest
     public void testRequeryWithAlteredSelectionArgs() throws Exception {
         /**
@@ -471,18 +507,17 @@ public class DatabaseCursorTest extends AndroidTestCase implements PerformanceTe
          */
         populateDefaultTable();
 
-        SQLiteDatabase.CursorFactory factory = new SQLiteDatabase.CursorFactory() {
-            public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery,
-                    String editTable, SQLiteQuery query) {
-                return new SQLiteCursor(db, masterQuery, editTable, query) {
-                    @Override
-                    public boolean requery() {
-                        setSelectionArguments(new String[] { "2" });
-                        return super.requery();
-                    }
-                };
+        SQLiteDatabaseWrapper.CursorFactoryWrapper<
+                SQLiteDatabaseType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > factory = createCursorFactory(new BeforeRequery<SQLiteCursorType>() {
+            @Override
+            public void beforeRequery(SQLiteCursorType cursor) {
+                SetSelectionArguments setSelectionArguments = createSetSelectionArguments(cursor);
+                setSelectionArguments.setSelectionArguments(new String[] { "2" });
             }
-        };
+        });
         Cursor testCursor = getTestCursor(mDatabase.rawQueryWithFactory(factory,
                 "SELECT data FROM test WHERE _id <= ?",
                 new String[] { "1" }, null));
