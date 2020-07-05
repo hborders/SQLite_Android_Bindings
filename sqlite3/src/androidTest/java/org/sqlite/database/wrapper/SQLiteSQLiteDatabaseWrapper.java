@@ -51,6 +51,11 @@ public class SQLiteSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
     }
 
     @Override
+    public SQLiteDatabase getSQLiteDatabase() {
+        return sqliteDatabase;
+    }
+
+    @Override
     public void close() {
         sqliteDatabase.close();
     }

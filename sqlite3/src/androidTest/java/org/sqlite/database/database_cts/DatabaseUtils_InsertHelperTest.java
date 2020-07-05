@@ -18,21 +18,46 @@ package org.sqlite.database.database_cts;
 
 
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
-import org.sqlite.database.DatabaseUtils.InsertHelper;
-import org.sqlite.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 
+import org.sqlite.database.DatabaseUtils.InsertHelper;
+import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.wrapper.InsertHelperWrapper;
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+
 import java.io.File;
 
-public class DatabaseUtils_InsertHelperTest extends AndroidTestCase {
+public abstract class DatabaseUtils_InsertHelperTest<
+        SQLiteDatabaseType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType
+        > extends AndroidTestCase {
     private static final String TEST_TABLE_NAME = "test";
     private static final String DATABASE_NAME = "database_test.db";
 
-    private SQLiteDatabase mDatabase;
-    private InsertHelper mInsertHelper;
+    private SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
+    private InsertHelperWrapper mInsertHelper;
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(String path);
+    protected abstract InsertHelperWrapper createInsertHelper(
+            SQLiteDatabaseWrapper<
+                    SQLiteDatabaseType,
+                    SQLiteCursorDriverType,
+                    SQLiteQueryType
+                    > database,
+            String tableName
+    );
 
     @Override
     protected void setUp() throws Exception {
@@ -40,9 +65,9 @@ public class DatabaseUtils_InsertHelperTest extends AndroidTestCase {
         System.loadLibrary("sqliteX");
         getContext().deleteDatabase(DATABASE_NAME);
         File f = mContext.getDatabasePath(DATABASE_NAME);
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(f, null);
+        mDatabase = openOrCreateDatabase(f.getPath());
         assertNotNull(mDatabase);
-        mInsertHelper = new InsertHelper(mDatabase, TEST_TABLE_NAME);
+        mInsertHelper = createInsertHelper(mDatabase, TEST_TABLE_NAME);
     }
 
     @Override
@@ -54,14 +79,14 @@ public class DatabaseUtils_InsertHelperTest extends AndroidTestCase {
     }
 
     public void testConstructor() {
-        new InsertHelper(mDatabase, TEST_TABLE_NAME);
+        createInsertHelper(mDatabase, TEST_TABLE_NAME);
     }
 
     public void testClose() {
         mInsertHelper.close();
     }
 
-    public void testGetColumnIndex() {
+    public void testGetColumnIndex() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE " + TEST_TABLE_NAME + " (_id INTEGER PRIMARY KEY, " +
                 "name TEXT, age INTEGER, address TEXT);");
         assertEquals(1, mInsertHelper.getColumnIndex("_id"));
@@ -76,7 +101,7 @@ public class DatabaseUtils_InsertHelperTest extends AndroidTestCase {
         }
     }
 
-    public void testInsert() {
+    public void testInsert() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE " + TEST_TABLE_NAME + "(_id INTEGER PRIMARY KEY," +
                 " boolean_value INTEGER, int_value INTEGER, long_value INTEGER," +
                 " double_value DOUBLE, float_value DOUBLE, string_value TEXT," +
@@ -178,7 +203,7 @@ public class DatabaseUtils_InsertHelperTest extends AndroidTestCase {
         assertEquals(-1, mInsertHelper.insert(values));
     }
 
-    public void testReplace() {
+    public void testReplace() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE " + TEST_TABLE_NAME + "(_id INTEGER PRIMARY KEY," +
                 " boolean_value INTEGER, int_value INTEGER, long_value INTEGER," +
                 " double_value DOUBLE, float_value DOUBLE, string_value TEXT," +

@@ -23,6 +23,8 @@ public interface SQLiteDatabaseWrapper<
                          SQLiteQueryType query);
     }
 
+    SQLiteDatabaseType getSQLiteDatabase();
+
     void close();
 
     void beginTransaction();

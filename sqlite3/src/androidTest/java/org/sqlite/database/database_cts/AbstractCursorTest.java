@@ -439,7 +439,6 @@ public abstract class AbstractCursorTest<
             mDatabaseFile.delete();
         }
         mDatabase = openOrCreateDatabase(mDatabaseFile.getPath());
-//        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null);
         assertNotNull(mDatabaseFile);
         mDatabase.execSQL("CREATE TABLE test1 (_id INTEGER PRIMARY KEY, number TEXT);");
         generateData();
