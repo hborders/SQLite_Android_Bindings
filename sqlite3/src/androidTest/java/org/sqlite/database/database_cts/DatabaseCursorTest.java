@@ -44,6 +44,7 @@ import java.util.Random;
 
 public abstract class DatabaseCursorTest<
         SQLiteDatabaseType,
+        SQLiteStatementType,
         SQLiteCursorDriverType,
         SQLiteQueryType,
         SQLiteCursorType
@@ -55,6 +56,7 @@ public abstract class DatabaseCursorTest<
     private static final int CURRENT_DATABASE_VERSION = 42;
     private SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > mDatabase;
@@ -64,10 +66,11 @@ public abstract class DatabaseCursorTest<
     private int  mTestType = TYPE_CURSOR;
 
     protected abstract SQLiteDatabaseWrapper<
-                SQLiteDatabaseType,
-                SQLiteCursorDriverType,
-                SQLiteQueryType
-                > openOrCreateDatabase(String path);
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(String path);
 
     @Override
     protected void setUp() throws Exception {

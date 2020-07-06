@@ -7,11 +7,13 @@ import org.sqlite.database.sqlite.SQLiteCursor;
 import org.sqlite.database.sqlite.SQLiteCursorDriver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 import org.sqlite.database.sqlite.SQLiteQuery;
+import org.sqlite.database.sqlite.SQLiteStatement;
 import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
 import org.sqlite.database.wrapper.SQLiteSQLiteDatabaseWrapper;
 
 public final class SQLiteDatabaseCursorTest extends DatabaseCursorTest<
         SQLiteDatabase,
+        SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
         SQLiteCursor
@@ -19,6 +21,7 @@ public final class SQLiteDatabaseCursorTest extends DatabaseCursorTest<
     @Override
     protected SQLiteDatabaseWrapper<
             SQLiteDatabase,
+            SQLiteStatement,
             SQLiteCursorDriver,
             SQLiteQuery
             > openOrCreateDatabase(String path) {

@@ -3,18 +3,23 @@ package org.sqlite.database.database_cts;
 import org.sqlite.database.DatabaseUtils;
 import org.sqlite.database.sqlite.SQLiteCursorDriver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteProgram;
 import org.sqlite.database.sqlite.SQLiteQuery;
 import org.sqlite.database.sqlite.SQLiteStatement;
+import org.sqlite.database.wrapper.DatabaseUtilsWrapper;
 import org.sqlite.database.wrapper.InsertHelperWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseUtilsWrapper;
 import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
 import org.sqlite.database.wrapper.SQLiteInsertHelperWrapper;
 import org.sqlite.database.wrapper.SQLiteSQLiteDatabaseWrapper;
 
-public class SQLiteDatabaseUtils_InsertHelperTest extends DatabaseUtils_InsertHelperTest<
+public final class SQLiteDatabaseUtilsTest extends DatabaseUtilsTest<
         SQLiteDatabase,
         SQLiteStatement,
         SQLiteCursorDriver,
-        SQLiteQuery
+        SQLiteQuery,
+        SQLiteProgram,
+        DatabaseUtils.InsertHelper
         > {
     @Override
     protected SQLiteDatabaseWrapper<
@@ -29,7 +34,19 @@ public class SQLiteDatabaseUtils_InsertHelperTest extends DatabaseUtils_InsertHe
     }
 
     @Override
-    protected InsertHelperWrapper createInsertHelper(
+    protected DatabaseUtilsWrapper<
+            SQLiteDatabase,
+            SQLiteStatement,
+            SQLiteCursorDriver,
+            SQLiteQuery,
+            SQLiteProgram,
+            DatabaseUtils.InsertHelper
+            > createDatabaseUtils() {
+        return new SQLiteDatabaseUtilsWrapper();
+    }
+
+    @Override
+    protected InsertHelperWrapper<DatabaseUtils.InsertHelper> createInsertHelper(
             SQLiteDatabaseWrapper<
                     SQLiteDatabase,
                     SQLiteStatement,
@@ -37,9 +54,7 @@ public class SQLiteDatabaseUtils_InsertHelperTest extends DatabaseUtils_InsertHe
                     SQLiteQuery
                     > database, String tableName) {
         return new SQLiteInsertHelperWrapper(
-                new DatabaseUtils.InsertHelper(
-                        database.getSQLiteDatabase(), tableName
-                )
+                new DatabaseUtils.InsertHelper(database.getSQLiteDatabase(), tableName)
         );
     }
 }

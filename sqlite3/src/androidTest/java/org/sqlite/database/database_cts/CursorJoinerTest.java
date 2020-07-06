@@ -31,6 +31,7 @@ import java.io.File;
 
 public abstract class CursorJoinerTest<
         SQLiteDatabaseType,
+        SQLiteStatementType,
         SQLiteCursorDriverType,
         SQLiteQueryType
         > extends AndroidTestCase {
@@ -50,6 +51,7 @@ public abstract class CursorJoinerTest<
 
     private SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > mDatabase;
@@ -217,6 +219,7 @@ public abstract class CursorJoinerTest<
 
     protected abstract SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > openOrCreateDatabase(String path);

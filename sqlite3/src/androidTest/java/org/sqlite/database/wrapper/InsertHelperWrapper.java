@@ -2,7 +2,9 @@ package org.sqlite.database.wrapper;
 
 import android.content.ContentValues;
 
-public interface InsertHelperWrapper {
+public interface InsertHelperWrapper<InsertHelperType> {
+    InsertHelperType getInsertHelper();
+
     int getColumnIndex(String key);
     void bind(int index, double value);
     void bind(int index, float value);

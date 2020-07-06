@@ -37,6 +37,7 @@ import java.util.Arrays;
 
 public abstract class CursorWrapperTest<
         SQLiteDatabaseType,
+        SQLiteStatementType,
         SQLiteCursorDriverType,
         SQLiteQueryType
         > extends AndroidTestCase {
@@ -54,6 +55,7 @@ public abstract class CursorWrapperTest<
 
     private SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > mDatabase;
@@ -470,15 +472,17 @@ public abstract class CursorWrapperTest<
 
     private void deleteWithValue(
             SQLiteDatabaseWrapper<
-            SQLiteDatabaseType,
-            SQLiteCursorDriverType,
-            SQLiteQueryType
-            > database, int value) throws SQLExceptionWrapper {
+                    SQLiteDatabaseType,
+                    SQLiteStatementType,
+                    SQLiteCursorDriverType,
+                    SQLiteQueryType
+                    > database, int value) throws SQLExceptionWrapper {
         database.execSQL("DELETE FROM test1 WHERE number = " + value + ";");
     }
 
     private void addWithValue(SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > database, int value) throws SQLExceptionWrapper {
@@ -488,6 +492,7 @@ public abstract class CursorWrapperTest<
     private void deleteAllRecords(
             SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+                    SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType> database) {
         database.delete("test1", null, null);
@@ -495,6 +500,7 @@ public abstract class CursorWrapperTest<
 
     protected abstract SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > openOrCreateDatabase(String path);

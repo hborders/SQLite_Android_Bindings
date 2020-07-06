@@ -41,6 +41,7 @@ import java.util.Random;
  */
 public abstract class AbstractCursorTest<
         SQLiteDatabaseType,
+        SQLiteStatementType,
         SQLiteCursorDriverType,
         SQLiteQueryType
         > extends InstrumentationTestCase {
@@ -57,10 +58,11 @@ public abstract class AbstractCursorTest<
     private Object mLockObj = new Object();
 
     private SQLiteDatabaseWrapper<
-                SQLiteDatabaseType,
-                SQLiteCursorDriverType,
-                SQLiteQueryType
-                > mDatabase;
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
     private File mDatabaseFile;
     private AbstractCursor mDatabaseCursor;
 
@@ -427,6 +429,7 @@ public abstract class AbstractCursorTest<
 
     protected abstract SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > openOrCreateDatabase(String path);

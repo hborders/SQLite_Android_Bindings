@@ -18,6 +18,7 @@ import java.util.Locale;
 
 public class SQLiteSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
         SQLiteDatabase,
+        SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery
         > {
@@ -173,10 +174,20 @@ public class SQLiteSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
     }
 
     @Override
-    public SQLiteStatementWrapper compileStatement(String sql) throws SQLExceptionWrapper {
+    public SQLiteStatementWrapper<SQLiteStatement> compileStatement(String sql) throws SQLExceptionWrapper {
         try {
             final SQLiteStatement sqliteStatement = sqliteDatabase.compileStatement(sql);
-            return new SQLiteStatementWrapper() {
+            return new SQLiteStatementWrapper<SQLiteStatement>() {
+                @Override
+                public void close() {
+                    sqliteStatement.close();
+                }
+
+                @Override
+                public SQLiteStatement getSQLiteStatement() {
+                    return sqliteStatement;
+                }
+
                 @Override
                 public void execute() {
                     sqliteStatement.execute();

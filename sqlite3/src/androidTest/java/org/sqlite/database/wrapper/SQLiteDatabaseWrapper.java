@@ -10,6 +10,7 @@ import java.util.Locale;
 
 public interface SQLiteDatabaseWrapper<
         SQLiteDatabaseType,
+        SQLiteStatementType,
         SQLiteCursorDriverType,
         SQLiteQueryType
         > {
@@ -30,7 +31,9 @@ public interface SQLiteDatabaseWrapper<
     void beginTransaction();
     void beginTransactionNonExclusive();
     void beginTransactionWithListener(SQLiteTransactionListenerWrapper transactionListener);
-    void beginTransactionWithListenerNonExclusive(SQLiteTransactionListenerWrapper transactionListener);
+    void beginTransactionWithListenerNonExclusive(
+            SQLiteTransactionListenerWrapper transactionListener
+    );
     void endTransaction();
     void setTransactionSuccessful();
     boolean inTransaction();
@@ -43,13 +46,16 @@ public interface SQLiteDatabaseWrapper<
     long setMaximumSize(long numBytes);
     long getPageSize();
     void setPageSize(long numBytes);
-    SQLiteStatementWrapper compileStatement(String sql) throws SQLExceptionWrapper;
+    SQLiteStatementWrapper<SQLiteStatementType> compileStatement(
+            String sql
+    ) throws SQLExceptionWrapper;
     Cursor query(boolean distinct, String table, String[] columns,
                  String selection, String[] selectionArgs, String groupBy,
                  String having, String orderBy, String limit);
     Cursor query(boolean distinct, String table, String[] columns,
                  String selection, String[] selectionArgs, String groupBy,
-                 String having, String orderBy, String limit, CancellationSignal cancellationSignal);
+                 String having, String orderBy, String limit,
+                 CancellationSignal cancellationSignal);
     Cursor queryWithFactory(
             CursorFactoryWrapper<
                     SQLiteDatabaseType,

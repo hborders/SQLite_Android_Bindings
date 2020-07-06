@@ -3,11 +3,18 @@ package org.sqlite.database.wrapper;
 import android.content.ContentValues;
 import android.database.DatabaseUtils;
 
-public class AndroidInsertHelperWrapper implements InsertHelperWrapper {
+public class AndroidInsertHelperWrapper implements InsertHelperWrapper<
+        DatabaseUtils.InsertHelper
+        > {
     private final DatabaseUtils.InsertHelper insertHelper;
 
     public AndroidInsertHelperWrapper(DatabaseUtils.InsertHelper insertHelper) {
         this.insertHelper = insertHelper;
+    }
+
+    @Override
+    public DatabaseUtils.InsertHelper getInsertHelper() {
+        return insertHelper;
     }
 
     @Override

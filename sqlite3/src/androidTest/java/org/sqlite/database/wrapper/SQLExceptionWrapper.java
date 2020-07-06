@@ -1,8 +1,8 @@
 package org.sqlite.database.wrapper;
 
-public class SQLExceptionWrapper extends Exception {
-    final android.database.SQLException androidSQLException;
-    final org.sqlite.database.SQLException sqliteSQLException;
+public final class SQLExceptionWrapper extends Exception {
+    public final android.database.SQLException androidSQLException;
+    public final org.sqlite.database.SQLException sqliteSQLException;
 
     public SQLExceptionWrapper(android.database.SQLException androidSQLException) {
         super(androidSQLException);

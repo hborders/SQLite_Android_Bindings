@@ -32,6 +32,7 @@ import java.io.File;
 
 public abstract class DatabaseUtils_InsertHelperTest<
         SQLiteDatabaseType,
+        SQLiteStatementType,
         SQLiteCursorDriverType,
         SQLiteQueryType
         > extends AndroidTestCase {
@@ -40,6 +41,7 @@ public abstract class DatabaseUtils_InsertHelperTest<
 
     private SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > mDatabase;
@@ -47,12 +49,14 @@ public abstract class DatabaseUtils_InsertHelperTest<
 
     protected abstract SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
+            SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
             > openOrCreateDatabase(String path);
     protected abstract InsertHelperWrapper createInsertHelper(
             SQLiteDatabaseWrapper<
                     SQLiteDatabaseType,
+                    SQLiteStatementType,
                     SQLiteCursorDriverType,
                     SQLiteQueryType
                     > database,

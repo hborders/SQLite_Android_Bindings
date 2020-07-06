@@ -6,22 +6,25 @@ import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQuery;
+import android.database.sqlite.SQLiteStatement;
 
 import org.sqlite.database.wrapper.AndroidSQLiteDatabaseWrapper;
 import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
 
 public final class AndroidDatabaseCursorTest extends DatabaseCursorTest<
         SQLiteDatabase,
+        SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
         SQLiteCursor
         > {
     @Override
     protected SQLiteDatabaseWrapper<
-                SQLiteDatabase,
-                SQLiteCursorDriver,
-                SQLiteQuery
-                > openOrCreateDatabase(String path) {
+            SQLiteDatabase,
+            SQLiteStatement,
+            SQLiteCursorDriver,
+            SQLiteQuery
+            > openOrCreateDatabase(String path) {
         return new AndroidSQLiteDatabaseWrapper(
                 SQLiteDatabase.openOrCreateDatabase(path, null)
         );
