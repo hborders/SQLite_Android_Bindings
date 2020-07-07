@@ -26,6 +26,8 @@ public interface SQLiteDatabaseWrapper<
 
     SQLiteDatabaseType getSQLiteDatabase();
 
+    int getMaxSqlCacheSize();
+
     void close();
 
     void beginTransaction();

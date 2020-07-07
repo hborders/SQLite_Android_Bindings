@@ -57,6 +57,11 @@ public class SQLiteSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
     }
 
     @Override
+    public int getMaxSqlCacheSize() {
+        return SQLiteDatabase.MAX_SQL_CACHE_SIZE;
+    }
+
+    @Override
     public void close() {
         sqliteDatabase.close();
     }
@@ -186,6 +191,11 @@ public class SQLiteSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
                 @Override
                 public SQLiteStatement getSQLiteStatement() {
                     return sqliteStatement;
+                }
+
+                @Override
+                public void bindAllArgsAsStrings(String[] bindArgs) {
+                    sqliteStatement.bindAllArgsAsStrings(bindArgs);
                 }
 
                 @Override

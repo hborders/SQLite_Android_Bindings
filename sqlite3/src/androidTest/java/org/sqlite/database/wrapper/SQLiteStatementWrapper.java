@@ -9,6 +9,8 @@ public interface SQLiteStatementWrapper<SQLiteStatementType> extends Closeable {
 
     SQLiteStatementType getSQLiteStatement();
 
+    void bindAllArgsAsStrings(String[] bindArgs);
+
     void execute();
     int executeUpdateDelete();
     long executeInsert();

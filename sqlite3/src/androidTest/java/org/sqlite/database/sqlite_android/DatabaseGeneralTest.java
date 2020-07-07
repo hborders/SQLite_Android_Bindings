@@ -32,9 +32,12 @@ import android.test.suitebuilder.annotation.SmallTest;
 import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 import android.util.Pair;
-import org.sqlite.database.sqlite.SQLiteDatabase;
-import org.sqlite.database.sqlite.SQLiteStatement;
-import org.sqlite.database.DefaultDatabaseErrorHandler;
+
+import org.sqlite.database.wrapper.DefaultDatabaseErrorHandlerWrapper;
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+import org.sqlite.database.wrapper.SQLiteStatementWrapper;
+
 import junit.framework.Assert;
 
 import java.io.File;
@@ -44,7 +47,12 @@ import java.util.List;
 import java.util.Locale;
 
 @SuppressWarnings({"deprecated", "ResultOfMethodCallIgnored"})
-public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceTestCase {
+public abstract class DatabaseGeneralTest<
+        SQLiteDatabaseType,
+        SQLiteStatementType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType
+        > extends AndroidTestCase implements PerformanceTestCase {
     private static final String TAG = "DatabaseGeneralTest";
 
     private static final String sString1 = "this is a test";
@@ -53,8 +61,20 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
     private static final String PHONE_NUMBER = "16175551212";
 
     private static final int CURRENT_DATABASE_VERSION = 42;
-    private SQLiteDatabase mDatabase;
+    protected SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
     private File mDatabaseFile;
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(String path);
 
     @Override
     protected void setUp() throws Exception {
@@ -65,7 +85,7 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();
         }
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null);
+        mDatabase = openOrCreateDatabase(mDatabaseFile.getPath());
         assertNotNull(mDatabase);
         mDatabase.setVersion(CURRENT_DATABASE_VERSION);
     }
@@ -86,26 +106,12 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         return 1;
     }
 
-    private void populateDefaultTable() {
+    private void populateDefaultTable() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, data TEXT);");
 
         mDatabase.execSQL("INSERT INTO test (data) VALUES ('" + sString1 + "');");
         mDatabase.execSQL("INSERT INTO test (data) VALUES ('" + sString2 + "');");
         mDatabase.execSQL("INSERT INTO test (data) VALUES ('" + sString3 + "');");
-    }
-
-    @MediumTest
-    public void testCustomFunctionNoReturn() {
-        mDatabase.addCustomFunction("emptyFunction", 1, new SQLiteDatabase.CustomFunction() {
-            @Override
-            public void callback(String[] args) {
-                return;
-            }
-        });
-        Cursor cursor = mDatabase.rawQuery("SELECT emptyFunction(3.14)", null);
-        // always empty regardless of if sqlite3_result_null is called or not
-        cursor.moveToFirst();
-        assertSame(null, cursor.getString(0));
     }
 
     @MediumTest
@@ -144,7 +150,9 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         c = mDatabase.query("phones", null,
                 "PHONE_NUMBERS_EQUAL(num, '504-555-7683')", null, null, null, null);
         assertTrue(c == null || c.getCount() == 0);
-        c.close();
+        if (c != null) {
+            c.close();
+        }
 
         c = mDatabase.query("phones", null,
                 "PHONE_NUMBERS_EQUAL(num, '911')", null, null, null, null);
@@ -391,7 +399,12 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
     
     @MediumTest
     public void testSchemaChange1() throws Exception {
-        SQLiteDatabase db1 = mDatabase;
+        SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > db1 = mDatabase;
         Cursor cursor;
 
         db1.execSQL("CREATE TABLE db1 (_id INTEGER PRIMARY KEY, data TEXT);");
@@ -705,11 +718,11 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         Assert.assertFalse(mDatabase.isDbLockedByCurrentThread());
     }
 
-    private void setNum(int num) {
+    private void setNum(int num) throws SQLExceptionWrapper {
         mDatabase.execSQL("UPDATE test SET num = " + num);
     }
 
-    private void checkNum(int num) {
+    private void checkNum(int num) throws SQLExceptionWrapper {
         Assert.assertEquals(
                 num, longForQuery(mDatabase, "SELECT num FROM test", null));
     }
@@ -818,7 +831,7 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
     }
 
     @MediumTest
-    public void testUnionsWithBindArgs() {
+    public void testUnionsWithBindArgs() throws SQLExceptionWrapper {
         /* make sure unions with bindargs work http://b/issue?id=1061291 */
         mDatabase.execSQL("CREATE TABLE A (i int);");
         mDatabase.execSQL("create table B (k int);");
@@ -934,11 +947,11 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
     }
 
     @SmallTest
-    public void testSetMaxCacheSize() {
+    public void testSetMaxCacheSize() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (i int, j int);");
         mDatabase.execSQL("insert into test values(1,1);");
         // set cache size
-        int N = SQLiteDatabase.MAX_SQL_CACHE_SIZE;
+        int N = mDatabase.getMaxSqlCacheSize();
         mDatabase.setMaxSqlCacheSize(N);
 
         // try reduce cachesize
@@ -949,9 +962,21 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         }
     }
 
+    protected abstract DefaultDatabaseErrorHandlerWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > createDefaultDatabaseErrorHandler();
+
     @LargeTest
-    public void testDefaultDatabaseErrorHandler() {
-        DefaultDatabaseErrorHandler errorHandler = new DefaultDatabaseErrorHandler();
+    public void testDefaultDatabaseErrorHandler() throws SQLExceptionWrapper {
+        DefaultDatabaseErrorHandlerWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > errorHandler = createDefaultDatabaseErrorHandler();
 
         // close the database. and call corruption handler.
         // it should delete the database file.
@@ -967,7 +992,12 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         }
 
         // create an in-memory database. and corruption handler shouldn't try to delete it
-        SQLiteDatabase memoryDb = SQLiteDatabase.openOrCreateDatabase(":memory:", null);
+        SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > memoryDb = openOrCreateDatabase(":memory:");
         assertNotNull(memoryDb);
         memoryDb.close();
         assertFalse(memoryDb.isOpen());
@@ -978,7 +1008,12 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         }
 
         // create a database, keep it open, call corruption handler. database file should be deleted
-        SQLiteDatabase dbObj = SQLiteDatabase.openOrCreateDatabase(mDatabase.getPath(), null);
+        SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > dbObj = openOrCreateDatabase(mDatabase.getPath());
         assertTrue(dbfile.exists());
         assertNotNull(dbObj);
         assertTrue(dbObj.isOpen());
@@ -995,7 +1030,7 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         // call corruption handler. database files including the one for attached database # 2
         // should be deleted
         String attachedDb1File = mDatabase.getPath() + "1";
-        dbObj = SQLiteDatabase.openOrCreateDatabase(mDatabase.getPath(), null);
+        dbObj = openOrCreateDatabase(mDatabase.getPath());
         dbObj.execSQL("ATTACH DATABASE ':memory:' as memoryDb");
         dbObj.execSQL("ATTACH DATABASE '" +  attachedDb1File + "' as attachedDb1");
         assertTrue(dbfile.exists());
@@ -1018,7 +1053,7 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
         for (int i = 0; i < N; i++) {
             attachedDbFiles.add(mDatabase.getPath() + i);
         }
-        dbObj = SQLiteDatabase.openOrCreateDatabase(mDatabase.getPath(), null);
+        dbObj = openOrCreateDatabase(mDatabase.getPath());
         dbObj.execSQL("ATTACH DATABASE ':memory:' as memoryDb");
         for (int i = 0; i < N; i++) {
             dbObj.execSQL("ATTACH DATABASE '" +  attachedDbFiles.get(i) + "' as attachedDb" + i);
@@ -1045,8 +1080,15 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
      * Utility method to run the query on the db and return the value in the
      * first column of the first row.
      */
-    public static long longForQuery(SQLiteDatabase db, String query, String[] selectionArgs) {
-        SQLiteStatement prog = db.compileStatement(query);
+    public long longForQuery(SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > db, String query, String[] selectionArgs) throws SQLExceptionWrapper {
+        SQLiteStatementWrapper<
+                SQLiteStatementType
+                > prog = db.compileStatement(query);
         try {
             return longForQuery(prog, selectionArgs);
         } finally {
@@ -1058,7 +1100,8 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
      * Utility method to run the pre-compiled query and return the value in the
      * first column of the first row.
      */
-    public static long longForQuery(SQLiteStatement prog, String[] selectionArgs) {
+    public long longForQuery(SQLiteStatementWrapper<SQLiteStatementType> prog,
+                             String[] selectionArgs) {
         prog.bindAllArgsAsStrings(selectionArgs);
         return prog.simpleQueryForLong();
     }
@@ -1067,8 +1110,13 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
      * Utility method to run the query on the db and return the value in the
      * first column of the first row.
      */
-    public static String stringForQuery(SQLiteDatabase db, String query, String[] selectionArgs) {
-        SQLiteStatement prog = db.compileStatement(query);
+    public String stringForQuery(SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > db, String query, String[] selectionArgs) throws SQLExceptionWrapper {
+        SQLiteStatementWrapper<SQLiteStatementType> prog = db.compileStatement(query);
         try {
             return stringForQuery(prog, selectionArgs);
         } finally {
@@ -1080,7 +1128,8 @@ public class DatabaseGeneralTest extends AndroidTestCase implements PerformanceT
      * Utility method to run the pre-compiled query and return the value in the
      * first column of the first row.
      */
-    public static String stringForQuery(SQLiteStatement prog, String[] selectionArgs) {
+    public String stringForQuery(SQLiteStatementWrapper<SQLiteStatementType> prog,
+                                 String[] selectionArgs) {
         prog.bindAllArgsAsStrings(selectionArgs);
         return prog.simpleQueryForString();
     }
