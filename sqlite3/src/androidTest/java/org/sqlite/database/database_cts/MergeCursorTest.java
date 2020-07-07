@@ -23,13 +23,20 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.MergeCursor;
 import android.database.StaleDataException;
-import org.sqlite.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
+
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
 
 import java.io.File;
 import java.util.Arrays;
 
-public class MergeCursorTest extends AndroidTestCase {
+public abstract class MergeCursorTest<
+        SQLiteDatabaseType,
+        SQLiteStatementType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType
+        > extends AndroidTestCase {
     private final int NUMBER_1_COLUMN_INDEX = 1;
     private static final String TABLE1_NAME = "test1";
     private static final String TABLE2_NAME = "test2";
@@ -38,7 +45,12 @@ public class MergeCursorTest extends AndroidTestCase {
     private static final String TABLE5_NAME = "test5";
     private static final String COLUMN_FOR_NULL_TEST = "Null Field";
 
-    private SQLiteDatabase mDatabase;
+    private SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
     private File mDatabaseFile;
 
     Cursor[] mCursors = null;
@@ -97,7 +109,7 @@ public class MergeCursorTest extends AndroidTestCase {
         }
     }
 
-    public void testCursorSwiching() {
+    public void testCursorSwiching() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE " + TABLE5_NAME + " (_id INTEGER PRIMARY KEY,"
                 + TABLE3_COLUMNS + ");");
         String sql = "INSERT INTO " + TABLE5_NAME + " (" + TEXT_COLUMN_NAME + ") VALUES ('TEXT')";
@@ -124,7 +136,7 @@ public class MergeCursorTest extends AndroidTestCase {
         assertTrue(Arrays.equals(tableColumns, mergeCursor.getColumnNames()));
     }
 
-    public void testGetValues() {
+    public void testGetValues() throws SQLExceptionWrapper {
         byte NUMBER_BLOB_UNIT = 99;
         String[] TEST_STRING = new String[] {"Test String1", "Test String2"};
         String[] tableNames = new String[] {TABLE3_NAME, TABLE4_NAME};
@@ -281,7 +293,7 @@ public class MergeCursorTest extends AndroidTestCase {
         }
     }
 
-    public void testRequery() {
+    public void testRequery() throws SQLExceptionWrapper {
         final String TEST_VALUE1 = Integer.toString(MAX_VALUE + 1);
         final String TEST_VALUE2 = Integer.toString(MAX_VALUE + 2);
         createCursors();
@@ -306,7 +318,7 @@ public class MergeCursorTest extends AndroidTestCase {
     }
 
     private void buildDatabaseWithTestValues(String text, double doubleNumber, long intNumber,
-            byte[] blob, String tablename) {
+            byte[] blob, String tablename) throws SQLExceptionWrapper {
         Object[] args = new Object[4];
         args[0] = text;
         args[1] = doubleNumber;
@@ -324,13 +336,20 @@ public class MergeCursorTest extends AndroidTestCase {
         mDatabase.execSQL(sql);
     }
 
-    private void setupDatabase() {
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(String path);
+
+    private void setupDatabase() throws SQLExceptionWrapper {
         File dbDir = getContext().getDir("tests", Context.MODE_PRIVATE);
         mDatabaseFile = new File(dbDir, "database_test.db");
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();
         }
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null);
+        mDatabase = openOrCreateDatabase(mDatabaseFile.getPath());
         assertNotNull(mDatabaseFile);
         createTable(TABLE1_NAME, TABLE1_COLUMNS);
         createTable(TABLE2_NAME, TABLE2_COLUMNS);
@@ -338,13 +357,13 @@ public class MergeCursorTest extends AndroidTestCase {
         addValuesIntoTable(TABLE2_NAME, HALF_VALUE + 1, MAX_VALUE);
     }
 
-    private void createTable(String tableName, String columnNames) {
+    private void createTable(String tableName, String columnNames) throws SQLExceptionWrapper {
         String sql = "Create TABLE " + tableName + " (_id INTEGER PRIMARY KEY, " + columnNames
                 + " );";
         mDatabase.execSQL(sql);
     }
 
-    private void addValuesIntoTable(String tableName, int start, int end) {
+    private void addValuesIntoTable(String tableName, int start, int end) throws SQLExceptionWrapper {
         for (int i = start; i <= end; i++) {
             mDatabase.execSQL("INSERT INTO " + tableName + "(number_1) VALUES ('"
                     + i + "');");
