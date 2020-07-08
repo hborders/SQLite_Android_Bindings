@@ -23,6 +23,7 @@ import android.database.Cursor;
 import org.sqlite.database.wrapper.DatabaseUtilsWrapper;
 import org.sqlite.database.wrapper.InsertHelperWrapper;
 import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteConstraintExceptionWrapper;
 import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
 import org.sqlite.database.wrapper.SQLiteDoneExceptionWrapper;
 import org.sqlite.database.wrapper.SQLiteExceptionWrapper;
@@ -146,7 +147,8 @@ public abstract class DatabaseUtilsTest<
         assertEquals(expected, sb.toString());
     }
 
-    public void testBindObjectToProgram() throws SQLExceptionWrapper {
+    public void testBindObjectToProgram(
+    ) throws SQLExceptionWrapper, SQLiteConstraintExceptionWrapper {
         String name = "Mike";
         int age = 21;
         String address = "LA";

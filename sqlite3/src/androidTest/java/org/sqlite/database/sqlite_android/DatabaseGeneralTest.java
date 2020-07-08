@@ -33,12 +33,13 @@ import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 import android.util.Pair;
 
+import junit.framework.Assert;
+
 import org.sqlite.database.wrapper.DefaultDatabaseErrorHandlerWrapper;
 import org.sqlite.database.wrapper.SQLExceptionWrapper;
 import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+import org.sqlite.database.wrapper.SQLiteDoneExceptionWrapper;
 import org.sqlite.database.wrapper.SQLiteStatementWrapper;
-
-import junit.framework.Assert;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -722,7 +723,7 @@ public abstract class DatabaseGeneralTest<
         mDatabase.execSQL("UPDATE test SET num = " + num);
     }
 
-    private void checkNum(int num) throws SQLExceptionWrapper {
+    private void checkNum(int num) throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
         Assert.assertEquals(
                 num, longForQuery(mDatabase, "SELECT num FROM test", null));
     }
@@ -1085,7 +1086,8 @@ public abstract class DatabaseGeneralTest<
             SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
-            > db, String query, String[] selectionArgs) throws SQLExceptionWrapper {
+            > db, String query, String[] selectionArgs
+    ) throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
         SQLiteStatementWrapper<
                 SQLiteStatementType
                 > prog = db.compileStatement(query);
@@ -1101,7 +1103,7 @@ public abstract class DatabaseGeneralTest<
      * first column of the first row.
      */
     public long longForQuery(SQLiteStatementWrapper<SQLiteStatementType> prog,
-                             String[] selectionArgs) {
+                             String[] selectionArgs) throws SQLiteDoneExceptionWrapper {
         prog.bindAllArgsAsStrings(selectionArgs);
         return prog.simpleQueryForLong();
     }
@@ -1115,7 +1117,8 @@ public abstract class DatabaseGeneralTest<
             SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType
-            > db, String query, String[] selectionArgs) throws SQLExceptionWrapper {
+            > db, String query, String[] selectionArgs
+    ) throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
         SQLiteStatementWrapper<SQLiteStatementType> prog = db.compileStatement(query);
         try {
             return stringForQuery(prog, selectionArgs);
@@ -1129,7 +1132,7 @@ public abstract class DatabaseGeneralTest<
      * first column of the first row.
      */
     public String stringForQuery(SQLiteStatementWrapper<SQLiteStatementType> prog,
-                                 String[] selectionArgs) {
+                                 String[] selectionArgs) throws SQLiteDoneExceptionWrapper {
         prog.bindAllArgsAsStrings(selectionArgs);
         return prog.simpleQueryForString();
     }

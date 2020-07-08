@@ -16,15 +16,16 @@
 
 package org.sqlite.database.sqlite_cts;
 
-import android.content.Context;
 import android.database.Cursor;
-import org.sqlite.database.sqlite.SQLiteConstraintException;
-import org.sqlite.database.sqlite.SQLiteDatabase;
-import org.sqlite.database.sqlite.SQLiteDoneException;
-import org.sqlite.database.sqlite.SQLiteStatement;
 import android.test.AndroidTestCase;
 import android.test.PerformanceTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
+
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteConstraintExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+import org.sqlite.database.wrapper.SQLiteDoneExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteStatementWrapper;
 
 import java.io.File;
 
@@ -34,7 +35,12 @@ import java.io.File;
  * Modifications:
  * - use Context to create and delete the DB to avoid hard-coded paths
  */
-public class DatabaseStatementTest extends AndroidTestCase implements PerformanceTestCase {
+public abstract class DatabaseStatementTest<
+        SQLiteDatabaseType,
+        SQLiteStatementType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType
+        > extends AndroidTestCase implements PerformanceTestCase {
 
     private static final String sString1 = "this is a test";
     private static final String sString2 = "and yet another test";
@@ -43,7 +49,19 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
     private static final String DATABASE_NAME = "database_test.db";
 
     private static final int CURRENT_DATABASE_VERSION = 42;
-    private SQLiteDatabase mDatabase;
+    private SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(File f);
 
     @Override
     protected void setUp() throws Exception {
@@ -52,7 +70,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
         File f = mContext.getDatabasePath(DATABASE_NAME);
         f.mkdirs();
         if (f.exists()) { f.delete(); }
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(f,null);
+        mDatabase = openOrCreateDatabase(f);
         assertNotNull(mDatabase);
         mDatabase.setVersion(CURRENT_DATABASE_VERSION);
     }
@@ -73,7 +91,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
         return 1;
     }
 
-    private void populateDefaultTable() {
+    private void populateDefaultTable() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, data TEXT);");
 
         mDatabase.execSQL("INSERT INTO test (data) VALUES ('" + sString1 + "');");
@@ -84,7 +102,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
     @MediumTest
     public void testExecuteStatement() throws Exception {
         populateDefaultTable();
-        SQLiteStatement statement = mDatabase.compileStatement("DELETE FROM test");
+        SQLiteStatementWrapper<SQLiteStatementType> statement = mDatabase.compileStatement("DELETE FROM test");
         statement.execute();
 
         Cursor c = mDatabase.query("test", null, null, null, null, null, null);
@@ -97,9 +115,9 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
     public void testSimpleQuery() throws Exception {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER NOT NULL, str TEXT NOT NULL);");
         mDatabase.execSQL("INSERT INTO test VALUES (1234, 'hello');");
-        SQLiteStatement statement1 =
+        SQLiteStatementWrapper<SQLiteStatementType> statement1 =
                 mDatabase.compileStatement("SELECT num FROM test WHERE str = ?");
-        SQLiteStatement statement2 =
+        SQLiteStatementWrapper<SQLiteStatementType> statement2 =
                 mDatabase.compileStatement("SELECT str FROM test WHERE num = ?");
 
         try {
@@ -110,7 +128,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
             statement1.bindString(1, "world");
             statement1.simpleQueryForLong();
             fail("shouldn't get here");
-        } catch (SQLiteDoneException e) {
+        } catch (SQLiteDoneExceptionWrapper e) {
             // expected
         }
 
@@ -122,7 +140,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
             statement2.bindLong(1, 5678);
             statement1.simpleQueryForString();
             fail("shouldn't get here");
-        } catch (SQLiteDoneException e) {
+        } catch (SQLiteDoneExceptionWrapper e) {
             // expected
         }
 
@@ -133,7 +151,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
     @MediumTest
     public void testStatementLongBinding() throws Exception {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
-        SQLiteStatement statement = mDatabase.compileStatement("INSERT INTO test (num) VALUES (?)");
+        SQLiteStatementWrapper<SQLiteStatementType> statement = mDatabase.compileStatement("INSERT INTO test (num) VALUES (?)");
 
         for (int i = 0; i < 10; i++) {
             statement.bindLong(1, i);
@@ -155,7 +173,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
     @MediumTest
     public void testStatementStringBinding() throws Exception {
         mDatabase.execSQL("CREATE TABLE test (num TEXT);");
-        SQLiteStatement statement = mDatabase.compileStatement("INSERT INTO test (num) VALUES (?)");
+        SQLiteStatementWrapper<SQLiteStatementType> statement = mDatabase.compileStatement("INSERT INTO test (num) VALUES (?)");
 
         for (long i = 0; i < 10; i++) {
             statement.bindString(1, Long.toHexString(i));
@@ -177,7 +195,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
     @MediumTest
     public void testStatementClearBindings() throws Exception {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
-        SQLiteStatement statement = mDatabase.compileStatement("INSERT INTO test (num) VALUES (?)");
+        SQLiteStatementWrapper<SQLiteStatementType> statement = mDatabase.compileStatement("INSERT INTO test (num) VALUES (?)");
 
         for (long i = 0; i < 10; i++) {
             statement.bindLong(1, i);
@@ -223,7 +241,7 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
     @MediumTest
     public void testStatementMultipleBindings() throws Exception {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER, str TEXT);");
-        SQLiteStatement statement =
+        SQLiteStatementWrapper<SQLiteStatementType> statement =
                 mDatabase.compileStatement("INSERT INTO test (num, str) VALUES (?, ?)");
 
         for (long i = 0; i < 10; i++) {
@@ -247,11 +265,26 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
         c.close();
     }
 
-    private static class StatementTestThread extends Thread {
-        private SQLiteDatabase mDatabase;
-        private SQLiteStatement mStatement;
+    private static class StatementTestThread<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > extends Thread {
+        private SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > mDatabase;
+        private SQLiteStatementWrapper<SQLiteStatementType> mStatement;
 
-        public StatementTestThread(SQLiteDatabase db, SQLiteStatement statement) {
+        public StatementTestThread(SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > db, SQLiteStatementWrapper<SQLiteStatementType> statement) {
             super();
             mDatabase = db;
             mStatement = statement;
@@ -259,37 +292,51 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
 
         @Override
         public void run() {
-            mDatabase.beginTransaction();
-            for (long i = 0; i < 10; i++) {
-                mStatement.bindLong(1, i);
-                mStatement.bindString(2, Long.toHexString(i));
-                mStatement.execute();
-            }
-            mDatabase.setTransactionSuccessful();
-            mDatabase.endTransaction();
+            try {
+                mDatabase.beginTransaction();
+                for (long i = 0; i < 10; i++) {
+                    mStatement.bindLong(1, i);
+                    mStatement.bindString(2, Long.toHexString(i));
+                    mStatement.execute();
+                }
+                mDatabase.setTransactionSuccessful();
+                mDatabase.endTransaction();
 
-            Cursor c = mDatabase.query("test", null, null, null, null, null, "ROWID");
-            int numCol = c.getColumnIndexOrThrow("num");
-            int strCol = c.getColumnIndexOrThrow("str");
-            assertTrue(c.moveToFirst());
-            for (long i = 0; i < 10; i++) {
-                long num = c.getLong(numCol);
-                String str = c.getString(strCol);
-                assertEquals(i, num);
-                assertEquals(Long.toHexString(i), str);
-                c.moveToNext();
+                Cursor c = mDatabase.query("test", null, null, null, null, null, "ROWID");
+                int numCol = c.getColumnIndexOrThrow("num");
+                int strCol = c.getColumnIndexOrThrow("str");
+                assertTrue(c.moveToFirst());
+                for (long i = 0; i < 10; i++) {
+                    long num = c.getLong(numCol);
+                    String str = c.getString(strCol);
+                    assertEquals(i, num);
+                    assertEquals(Long.toHexString(i), str);
+                    c.moveToNext();
+                }
+                c.close();
+            } catch (SQLExceptionWrapper ignored) {
+            } catch (SQLiteConstraintExceptionWrapper ignored) {
             }
-            c.close();
         }
     }
 
     @MediumTest
     public void testStatementMultiThreaded() throws Exception {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER, str TEXT);");
-        SQLiteStatement statement =
+        SQLiteStatementWrapper<SQLiteStatementType> statement =
                 mDatabase.compileStatement("INSERT INTO test (num, str) VALUES (?, ?)");
 
-        StatementTestThread thread = new StatementTestThread(mDatabase, statement);
+        StatementTestThread<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                > thread = new StatementTestThread<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType
+                >(mDatabase, statement);
         thread.start();
         try {
             thread.join();
@@ -301,14 +348,14 @@ public class DatabaseStatementTest extends AndroidTestCase implements Performanc
     @MediumTest
     public void testStatementConstraint() throws Exception {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER NOT NULL);");
-        SQLiteStatement statement = mDatabase.compileStatement("INSERT INTO test (num) VALUES (?)");
+        SQLiteStatementWrapper<SQLiteStatementType> statement = mDatabase.compileStatement("INSERT INTO test (num) VALUES (?)");
 
         // Try to insert NULL, which violates the constraint
         try {
             statement.clearBindings();
             statement.execute();
             fail("expected exception not thrown");
-        } catch (SQLiteConstraintException e) {
+        } catch (SQLiteConstraintExceptionWrapper e) {
             // expected
         }
 

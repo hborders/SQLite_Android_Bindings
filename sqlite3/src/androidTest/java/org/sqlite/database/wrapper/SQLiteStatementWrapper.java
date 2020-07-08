@@ -9,12 +9,15 @@ public interface SQLiteStatementWrapper<SQLiteStatementType> extends Closeable {
 
     SQLiteStatementType getSQLiteStatement();
 
+    void bindLong(int index, long value);
+    void bindString(int index, String value);
+    void clearBindings();
     void bindAllArgsAsStrings(String[] bindArgs);
 
-    void execute();
+    void execute() throws SQLExceptionWrapper, SQLiteConstraintExceptionWrapper;
     int executeUpdateDelete();
     long executeInsert();
-    long simpleQueryForLong();
-    String simpleQueryForString();
+    long simpleQueryForLong() throws SQLiteDoneExceptionWrapper;
+    String simpleQueryForString() throws SQLiteDoneExceptionWrapper;
     ParcelFileDescriptor simpleQueryForBlobFileDescriptor();
 }

@@ -3,8 +3,10 @@ package org.sqlite.database.wrapper;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
 import android.database.sqlite.SQLiteTransactionListener;
@@ -195,13 +197,34 @@ public class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
                 }
 
                 @Override
+                public void bindLong(int index, long value) {
+                    sqliteStatement.bindLong(index, value);
+                }
+
+                @Override
+                public void bindString(int index, String value) {
+                    sqliteStatement.bindString(index, value);
+                }
+
+                @Override
+                public void clearBindings() {
+                    sqliteStatement.clearBindings();
+                }
+
+                @Override
                 public void bindAllArgsAsStrings(String[] bindArgs) {
                     sqliteStatement.bindAllArgsAsStrings(bindArgs);
                 }
 
                 @Override
-                public void execute() {
-                    sqliteStatement.execute();
+                public void execute() throws SQLExceptionWrapper, SQLiteConstraintExceptionWrapper {
+                    try {
+                        sqliteStatement.execute();
+                    } catch (SQLiteConstraintException wrapped) {
+                        throw new SQLiteConstraintExceptionWrapper(wrapped);
+                    } catch (SQLException wrapped) {
+                        throw new SQLExceptionWrapper(wrapped);
+                    }
                 }
 
                 @Override
@@ -215,13 +238,21 @@ public class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
                 }
 
                 @Override
-                public long simpleQueryForLong() {
-                    return sqliteStatement.simpleQueryForLong();
+                public long simpleQueryForLong() throws SQLiteDoneExceptionWrapper {
+                    try {
+                        return sqliteStatement.simpleQueryForLong();
+                    } catch (SQLiteDoneException wrapped) {
+                        throw new SQLiteDoneExceptionWrapper(wrapped);
+                    }
                 }
 
                 @Override
-                public String simpleQueryForString() {
-                    return sqliteStatement.simpleQueryForString();
+                public String simpleQueryForString() throws SQLiteDoneExceptionWrapper {
+                    try {
+                        return sqliteStatement.simpleQueryForString();
+                    } catch (SQLiteDoneException wrapped) {
+                        throw new SQLiteDoneExceptionWrapper(wrapped);
+                    }
                 }
 
                 @Override
