@@ -3,7 +3,7 @@ package org.sqlite.database.wrapper;
 import android.content.ContentValues;
 import android.database.DatabaseUtils;
 
-public class AndroidInsertHelperWrapper implements InsertHelperWrapper<
+public final class AndroidInsertHelperWrapper implements InsertHelperWrapper<
         DatabaseUtils.InsertHelper
         > {
     private final DatabaseUtils.InsertHelper insertHelper;

@@ -16,7 +16,7 @@ import org.sqlite.database.sqlite.SQLiteStatement;
 
 import java.io.PrintStream;
 
-public class SQLiteDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
+public final class SQLiteDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
         SQLiteDatabase,
         SQLiteStatement,
         SQLiteCursorDriver,

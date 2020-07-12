@@ -18,7 +18,7 @@ import org.sqlite.database.sqlite.SQLiteTransactionListener;
 import java.util.List;
 import java.util.Locale;
 
-public class SQLiteSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
+public final class SQLiteSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
         SQLiteDatabase,
         SQLiteStatement,
         SQLiteCursorDriver,

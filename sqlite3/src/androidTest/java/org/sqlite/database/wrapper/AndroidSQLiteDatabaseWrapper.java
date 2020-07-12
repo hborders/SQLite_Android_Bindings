@@ -17,7 +17,7 @@ import android.util.Pair;
 import java.util.List;
 import java.util.Locale;
 
-public class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
+public final class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
         SQLiteDatabase,
         SQLiteStatement,
         SQLiteCursorDriver,

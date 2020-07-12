@@ -1,6 +1,6 @@
 package org.sqlite.database.wrapper;
 
-public class SQLiteConstraintExceptionWrapper extends Exception {
+public final class SQLiteConstraintExceptionWrapper extends Exception {
     public final android.database.sqlite.SQLiteConstraintException androidSQLiteConstraintException;
     public final org.sqlite.database.sqlite.SQLiteConstraintException sqliteSQLiteConstraintException;
 

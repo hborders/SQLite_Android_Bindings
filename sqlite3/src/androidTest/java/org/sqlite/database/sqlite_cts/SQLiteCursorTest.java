@@ -17,15 +17,15 @@
 package org.sqlite.database.sqlite_cts;
 
 
-import android.content.Context;
 import android.database.AbstractCursor;
 import android.database.Cursor;
 import android.database.CursorWindow;
 import android.database.DataSetObserver;
 import android.database.StaleDataException;
-import org.sqlite.database.sqlite.SQLiteCursor;
-import org.sqlite.database.sqlite.SQLiteDatabase;
-import org.sqlite.database.sqlite.SQLiteDirectCursorDriver;
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteCursorWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+
 import android.test.AndroidTestCase;
 
 import java.io.File;
@@ -34,15 +34,39 @@ import java.util.Arrays;
 /**
  * Test {@link AbstractCursor}.
  */
-public class SQLiteCursorTest extends AndroidTestCase {
-    private SQLiteDatabase mDatabase;
+public abstract class SQLiteCursorTest<
+        SQLiteDatabase,
+        SQLiteStatement,
+        SQLiteCursorDriver,
+        SQLiteQuery,
+        SQLiteCursorType
+        > extends AndroidTestCase {
+    protected SQLiteDatabaseWrapper<
+            SQLiteDatabase,
+            SQLiteStatement,
+            SQLiteCursorDriver,
+            SQLiteQuery
+            > mDatabase;
     private static final String[] COLUMNS = new String[] { "_id", "number_1", "number_2" };
-    private static final String TABLE_NAME = "test";
+    protected static final String TABLE_NAME = "test";
     private static final String TABLE_COLUMNS = " number_1 INTEGER, number_2 INTEGER";
     private static final int DEFAULT_TABLE_VALUE_BEGINS = 1;
     private static final int TEST_COUNT = 10;
-    private static final String TEST_SQL = "SELECT * FROM test ORDER BY number_1";
+    protected static final String TEST_SQL = "SELECT * FROM test ORDER BY number_1";
     private static final String DATABASE_FILE = "database_test.db";
+
+    private final Class<SQLiteCursorType> sqLiteCursorClass;
+
+    protected SQLiteCursorTest(Class<SQLiteCursorType> sqLiteCursorClass) {
+        this.sqLiteCursorClass = sqLiteCursorClass;
+    }
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabase,
+            SQLiteStatement,
+            SQLiteCursorDriver,
+            SQLiteQuery
+            > openOrCreateDatabase(File f);
 
     @Override
     protected void setUp() throws Exception {
@@ -51,7 +75,7 @@ public class SQLiteCursorTest extends AndroidTestCase {
         File f = mContext.getDatabasePath(DATABASE_FILE);
         f.mkdirs();
         if (f.exists()) { f.delete(); }
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(f, null);
+        mDatabase = openOrCreateDatabase(f);
         createTable(TABLE_NAME, TABLE_COLUMNS);
         addValuesIntoTable(TABLE_NAME, DEFAULT_TABLE_VALUE_BEGINS, TEST_COUNT);
     }
@@ -64,21 +88,13 @@ public class SQLiteCursorTest extends AndroidTestCase {
     }
 
     public void testConstructor() {
-        SQLiteDirectCursorDriver cursorDriver = new SQLiteDirectCursorDriver(mDatabase,
-                TEST_SQL, TABLE_NAME, null);
-        try {
-            new SQLiteCursor(mDatabase, cursorDriver, TABLE_NAME, null);
-            fail("constructor didn't throw IllegalArgumentException when SQLiteQuery is null");
-        } catch (IllegalArgumentException e) {
-        }
-
         // get SQLiteCursor by querying database
-        SQLiteCursor cursor = getCursor();
+        SQLiteCursorWrapper cursor = getCursor();
         assertNotNull(cursor);
     }
 
     public void testClose() {
-        SQLiteCursor cursor = getCursor();
+        SQLiteCursorWrapper cursor = getCursor();
         assertTrue(cursor.moveToFirst());
         assertFalse(cursor.isClosed());
         assertTrue(cursor.requery());
@@ -93,7 +109,7 @@ public class SQLiteCursorTest extends AndroidTestCase {
     }
 
     public void testRegisterDataSetObserver() {
-        SQLiteCursor cursor = getCursor();
+        SQLiteCursorWrapper cursor = getCursor();
         MockCursorWindow cursorWindow = new MockCursorWindow(false);
 
         MockObserver observer = new MockObserver();
@@ -143,14 +159,14 @@ public class SQLiteCursorTest extends AndroidTestCase {
         assertFalse(observer.hasInvalidated());
     }
 
-    public void testRequery() {
+    public void testRequery() throws SQLExceptionWrapper {
         final String DELETE = "DELETE FROM " + TABLE_NAME + " WHERE number_1 =";
         final String DELETE_1 = DELETE + "1;";
         final String DELETE_2 = DELETE + "2;";
 
         mDatabase.execSQL(DELETE_1);
         // when cursor is created, it refreshes CursorWindow and populates cursor count
-        SQLiteCursor cursor = getCursor();
+        SQLiteCursorWrapper cursor = getCursor();
         MockObserver observer = new MockObserver();
         cursor.registerDataSetObserver(observer);
         assertEquals(TEST_COUNT - 1, cursor.getCount());
@@ -166,7 +182,7 @@ public class SQLiteCursorTest extends AndroidTestCase {
         assertTrue(observer.hasChanged());
     }
 
-    public void testRequery2() {
+    public void testRequery2() throws SQLExceptionWrapper {
         mDatabase.disableWriteAheadLogging();
         mDatabase.execSQL("create table testRequery2 (i int);");
         mDatabase.execSQL("insert into testRequery2 values(1);");
@@ -193,7 +209,7 @@ public class SQLiteCursorTest extends AndroidTestCase {
     }
 
     public void testGetColumnIndex() {
-        SQLiteCursor cursor = getCursor();
+        SQLiteCursorWrapper cursor = getCursor();
 
         for (int i = 0; i < COLUMNS.length; i++) {
             assertEquals(i, cursor.getColumnIndex(COLUMNS[i]));
@@ -206,8 +222,9 @@ public class SQLiteCursorTest extends AndroidTestCase {
         final String SELECTION = "_id > ?";
         int TEST_ARG1 = 2;
         int TEST_ARG2 = 5;
-        SQLiteCursor cursor = (SQLiteCursor) mDatabase.query(TABLE_NAME, null, SELECTION,
-                new String[] { Integer.toString(TEST_ARG1) }, null, null, null);
+        SQLiteCursorType genericCursor = sqLiteCursorClass.cast(mDatabase.query(TABLE_NAME, null, SELECTION,
+                new String[] { Integer.toString(TEST_ARG1) }, null, null, null));
+        SQLiteCursorWrapper cursor = getCursor(genericCursor);
         assertEquals(TEST_COUNT - TEST_ARG1, cursor.getCount());
         cursor.setSelectionArguments(new String[] { Integer.toString(TEST_ARG2) });
         cursor.requery();
@@ -220,22 +237,24 @@ public class SQLiteCursorTest extends AndroidTestCase {
         // 2. The functionality is implementation details, no need to test
     }
 
-    private void createTable(String tableName, String columnNames) {
+    private void createTable(String tableName, String columnNames) throws SQLExceptionWrapper {
         String sql = "Create TABLE " + tableName + " (_id INTEGER PRIMARY KEY, "
                 + columnNames + " );";
         mDatabase.execSQL(sql);
     }
 
-    private void addValuesIntoTable(String tableName, int start, int end) {
+    private void addValuesIntoTable(String tableName, int start, int end) throws SQLExceptionWrapper {
         for (int i = start; i <= end; i++) {
             mDatabase.execSQL("INSERT INTO " + tableName + "(number_1) VALUES ('" + i + "');");
         }
     }
 
-    private SQLiteCursor getCursor() {
-        SQLiteCursor cursor = (SQLiteCursor) mDatabase.query(TABLE_NAME, null, null,
-                null, null, null, null);
-        return cursor;
+    protected abstract SQLiteCursorWrapper getCursor(SQLiteCursorType sqliteCursor);
+
+    protected abstract SQLiteCursorType getGenericCursor();
+
+    private SQLiteCursorWrapper getCursor() {
+        return getCursor(getGenericCursor());
     }
 
     private class MockObserver extends DataSetObserver {

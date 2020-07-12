@@ -16,13 +16,13 @@
 
 package org.sqlite.database.sqlite_cts;
 
-import org.sqlite.database.sqlite.SQLiteAbortException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.test.AndroidTestCase;
 
-public class SQLiteAbortExceptionTest extends AndroidTestCase {
+public class AndroidSQLiteConstraintExceptionTest extends AndroidTestCase {
     public void testConstructor() {
-        new SQLiteAbortException();
+        new SQLiteConstraintException();
 
-        new SQLiteAbortException("error");
+        new SQLiteConstraintException("error");
     }
 }

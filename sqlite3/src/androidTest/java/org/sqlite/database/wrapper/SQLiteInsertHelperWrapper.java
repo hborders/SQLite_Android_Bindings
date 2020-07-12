@@ -4,7 +4,7 @@ import android.content.ContentValues;
 
 import org.sqlite.database.DatabaseUtils;
 
-public class SQLiteInsertHelperWrapper implements InsertHelperWrapper<DatabaseUtils.InsertHelper> {
+public final class SQLiteInsertHelperWrapper implements InsertHelperWrapper<DatabaseUtils.InsertHelper> {
     private final DatabaseUtils.InsertHelper insertHelper;
 
     public SQLiteInsertHelperWrapper(DatabaseUtils.InsertHelper insertHelper) {

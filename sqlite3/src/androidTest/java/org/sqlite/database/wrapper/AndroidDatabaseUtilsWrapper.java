@@ -15,7 +15,7 @@ import android.os.ParcelFileDescriptor;
 
 import java.io.PrintStream;
 
-public class AndroidDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
+public final class AndroidDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
         SQLiteDatabase,
         SQLiteStatement,
         SQLiteCursorDriver,

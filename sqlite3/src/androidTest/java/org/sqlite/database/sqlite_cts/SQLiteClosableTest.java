@@ -17,34 +17,23 @@
 package org.sqlite.database.sqlite_cts;
 
 import org.sqlite.database.sqlite.SQLiteClosable;
+import org.sqlite.database.wrapper.SQLiteClosableWrapper;
+
 import android.test.AndroidTestCase;
 
-public class SQLiteClosableTest extends AndroidTestCase {
-    private class MockSQLiteClosable extends SQLiteClosable {
-        private boolean mOnAllReferencesReleasedCalled = false;
-        private boolean mOnAllReferencesReleasedFromContainerCalled = false;
+public abstract class SQLiteClosableTest extends AndroidTestCase {
+    private SQLiteClosableWrapper closable;
 
-        @Override
-        protected void onAllReferencesReleased() {
-            mOnAllReferencesReleasedCalled = true;
-        }
+    protected abstract SQLiteClosableWrapper createSQLiteClosableWrapper();
 
-        protected void onAllReferencesReleasedFromContainer() {
-            mOnAllReferencesReleasedFromContainerCalled = true;
-        }
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
 
-        public boolean isOnAllReferencesReleasedCalled() {
-            return mOnAllReferencesReleasedCalled;
-        }
-
-        public boolean isOnAllReferencesReleasedFromContainerCalled() {
-            return mOnAllReferencesReleasedFromContainerCalled;
-        }
+        closable = createSQLiteClosableWrapper();
     }
 
     public void testAcquireReference() {
-        MockSQLiteClosable closable = new MockSQLiteClosable();
-
         closable.acquireReference();
         closable.releaseReference();
 
@@ -61,8 +50,6 @@ public class SQLiteClosableTest extends AndroidTestCase {
     }
 
     public void testReleaseReferenceFromContainer() {
-        MockSQLiteClosable closable = new MockSQLiteClosable();
-
         closable.acquireReference();
         closable.releaseReferenceFromContainer();
 
