@@ -68,6 +68,11 @@ public final class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper
     }
 
     @Override
+    public void setLockingEnabled(boolean lockingEnabled) {
+        sqliteDatabase.setLockingEnabled(lockingEnabled);
+    }
+
+    @Override
     public void beginTransaction() {
         sqliteDatabase.beginTransaction();
     }
@@ -139,6 +144,16 @@ public final class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper
     @Override
     public boolean isDbLockedByCurrentThread() {
         return sqliteDatabase.isDbLockedByCurrentThread();
+    }
+
+    @Override
+    public boolean isDbLockedByOtherThreads() {
+        return sqliteDatabase.isDbLockedByCurrentThread();
+    }
+
+    @Override
+    public boolean yieldIfContended() {
+        return sqliteDatabase.yieldIfContended();
     }
 
     @Override

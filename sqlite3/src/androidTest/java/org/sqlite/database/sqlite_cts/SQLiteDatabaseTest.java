@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -35,13 +36,40 @@ import org.sqlite.database.sqlite.SQLiteException;
 import org.sqlite.database.sqlite.SQLiteQuery;
 import org.sqlite.database.sqlite.SQLiteStatement;
 import org.sqlite.database.sqlite.SQLiteTransactionListener;
+import org.sqlite.database.wrapper.DatabaseUtilsWrapper;
+import org.sqlite.database.wrapper.SQLExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteConstraintExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
+import org.sqlite.database.wrapper.SQLiteDoneExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteStatementWrapper;
+
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.SmallTest;
 
-public class SQLiteDatabaseTest extends AndroidTestCase {
-    private SQLiteDatabase mDatabase;
+public abstract class SQLiteDatabaseTest<
+        SQLiteDatabaseType,
+        SQLiteStatementType extends SQLiteProgramType,
+        SQLiteCursorDriverType,
+        SQLiteQueryType,
+        SQLiteProgramType,
+        InsertHelperType
+        > extends AndroidTestCase {
+    private SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > mDatabase;
+    private DatabaseUtilsWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType,
+            SQLiteProgramType,
+            InsertHelperType
+            > mDatabaseUtils;
     private File mDatabaseFile;
     private String mDatabaseFilePath;
     private String mDatabaseDir;
@@ -63,6 +91,22 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
             "address"   // 3
     };
 
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType
+            > openOrCreateDatabase(File f);
+
+    protected abstract DatabaseUtilsWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType,
+            SQLiteProgramType,
+            InsertHelperType
+            > createDatabaseUtils();
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -73,7 +117,8 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         mDatabaseFile = getContext().getDatabasePath(DATABASE_FILE_NAME);
         mDatabaseDir = mDatabaseFile.getParent();
         mDatabaseFile.getParentFile().mkdirs(); // directory may not exist
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile, null);
+        mDatabase = openOrCreateDatabase(mDatabaseFile);
+        mDatabaseUtils = createDatabaseUtils();
         assertNotNull(mDatabase);
 
         mTransactionListenerOnBeginCalled = false;
@@ -161,7 +206,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         }
     }
 
-    public void testTransaction() {
+    public void testTransaction() throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
         mDatabase.execSQL("INSERT INTO test (num) VALUES (0)");
 
@@ -270,12 +315,12 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         assertFalse(mDatabase.isDbLockedByOtherThreads());
     }
 
-    private void setNum(int num) {
+    private void setNum(int num) throws SQLExceptionWrapper {
         mDatabase.execSQL("UPDATE test SET num = " + num);
     }
 
-    private void assertNum(int num) {
-        assertEquals(num, DatabaseUtils.longForQuery(mDatabase,
+    private void assertNum(int num) throws SQLiteDoneExceptionWrapper {
+        assertEquals(num, mDatabaseUtils.longForQuery(mDatabase,
                 "SELECT num FROM test", null));
     }
 
@@ -323,7 +368,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         }
     }
 
-    public void testCompileStatement() {
+    public void testCompileStatement() throws SQLExceptionWrapper, SQLiteConstraintExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, "
                 + "name TEXT, age INTEGER, address TEXT);");
 
@@ -337,10 +382,10 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         assertEquals(0, cursor.getCount());
 
         String sql = "INSERT INTO test (name, age, address) VALUES (?, ?, ?);";
-        SQLiteStatement insertStatement = mDatabase.compileStatement(sql);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 1, name);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 2, age);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 3, address);
+        SQLiteStatementWrapper<SQLiteStatementType> insertStatement = mDatabase.compileStatement(sql);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 1, name);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 2, age);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 3, address);
         insertStatement.execute();
         insertStatement.close();
         cursor.close();
@@ -354,7 +399,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         assertEquals(address, cursor.getString(COLUMN_ADDR_INDEX));
         cursor.close();
 
-        SQLiteStatement deleteStatement = mDatabase.compileStatement("DELETE FROM test");
+        SQLiteStatementWrapper<SQLiteStatementType> deleteStatement = mDatabase.compileStatement("DELETE FROM test");
         deleteStatement.execute();
 
         cursor = mDatabase.query("test", null, null, null, null, null, null);
@@ -364,7 +409,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         cursor.close();
     }
 
-    public void testDelete() {
+    public void testDelete() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, "
                 + "name TEXT, age INTEGER, address TEXT);");
         mDatabase.execSQL("INSERT INTO test (name, age, address) VALUES ('Mike', 20, 'LA');");
@@ -418,7 +463,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         cursor.close();
     }
 
-    public void testExecSQL() {
+    public void testExecSQL() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, "
                 + "name TEXT, age INTEGER, address TEXT);");
 
@@ -537,7 +582,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         assertEquals(3, mDatabase.getVersion());
     }
 
-    public void testInsert() {
+    public void testInsert() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, "
                 + "name TEXT, age INTEGER, address TEXT);");
 
@@ -647,7 +692,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         SQLiteDatabase.releaseMemory();
     }
 
-    public void testSetLockingEnabled() {
+    public void testSetLockingEnabled() throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
         mDatabase.execSQL("INSERT INTO test (num) VALUES (0)");
 
@@ -661,7 +706,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
     }
 
     @SuppressWarnings("deprecation")
-    public void testYieldIfContendedWhenNotContended() {
+    public void testYieldIfContendedWhenNotContended() throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
         assertFalse(mDatabase.yieldIfContended());
 
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
@@ -703,17 +748,23 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         // begin its own transaction.  It should perceive the new state that was
         // committed by the main thread when it yielded.
         final Semaphore s = new Semaphore(0);
+        final AtomicReference<Exception> thrownExceptionAtomicReference =
+                new AtomicReference<Exception>();
         Thread t = new Thread() {
             @Override
             public void run() {
-                s.release(); // let main thread continue
+                try {
+                    s.release(); // let main thread continue
 
-                mDatabase.beginTransaction();
-                assertNum(1);
-                setNum(2);
-                assertNum(2);
-                mDatabase.setTransactionSuccessful();
-                mDatabase.endTransaction();
+                    mDatabase.beginTransaction();
+                    assertNum(1);
+                    setNum(2);
+                    assertNum(2);
+                    mDatabase.setTransactionSuccessful();
+                    mDatabase.endTransaction();
+                } catch (Exception e) {
+                    thrownExceptionAtomicReference.set(e);
+                }
             }
         };
         t.start();
@@ -738,9 +789,14 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         assertNum(3);
 
         t.join();
+
+        final Exception thrownException = thrownExceptionAtomicReference.get();
+        if (thrownException != null) {
+            throw thrownException;
+        }
     }
 
-    public void testQuery() {
+    public void testQuery() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE employee (_id INTEGER PRIMARY KEY, " +
                 "name TEXT, month INTEGER, salary INTEGER);");
         mDatabase.execSQL("INSERT INTO employee (name, month, salary) " +

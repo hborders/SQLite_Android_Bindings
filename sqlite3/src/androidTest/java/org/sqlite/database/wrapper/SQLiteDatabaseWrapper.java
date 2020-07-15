@@ -30,6 +30,7 @@ public interface SQLiteDatabaseWrapper<
 
     void close();
 
+    void setLockingEnabled(boolean lockingEnabled);
     void beginTransaction();
     void beginTransactionNonExclusive();
     void beginTransactionWithListener(SQLiteTransactionListenerWrapper transactionListener);
@@ -40,6 +41,8 @@ public interface SQLiteDatabaseWrapper<
     void setTransactionSuccessful();
     boolean inTransaction();
     boolean isDbLockedByCurrentThread();
+    boolean isDbLockedByOtherThreads();
+    boolean yieldIfContended();
     boolean yieldIfContendedSafely();
     boolean yieldIfContendedSafely(long sleepAfterYieldDelay);
     int getVersion();
