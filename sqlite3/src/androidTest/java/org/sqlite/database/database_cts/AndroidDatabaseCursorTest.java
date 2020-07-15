@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
 
@@ -16,6 +17,7 @@ public final class AndroidDatabaseCursorTest extends DatabaseCursorTest<
         SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
+        CursorFactory,
         SQLiteCursor
         > {
     @Override
@@ -23,7 +25,8 @@ public final class AndroidDatabaseCursorTest extends DatabaseCursorTest<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > openOrCreateDatabase(String path) {
         return new AndroidSQLiteDatabaseWrapper(
                 SQLiteDatabase.openOrCreateDatabase(path, null)
@@ -41,16 +44,9 @@ public final class AndroidDatabaseCursorTest extends DatabaseCursorTest<
     }
 
     @Override
-    protected SQLiteDatabaseWrapper.CursorFactoryWrapper<
-            SQLiteDatabase,
-            SQLiteCursorDriver,
-            SQLiteQuery
-            > createCursorFactory(final BeforeRequery<SQLiteCursor> beforeRequery) {
-        return new SQLiteDatabaseWrapper.CursorFactoryWrapper<
-                SQLiteDatabase,
-                SQLiteCursorDriver,
-                SQLiteQuery
-                >() {
+    protected CursorFactory createCursorFactory(final BeforeRequery<SQLiteCursor> beforeRequery) {
+        return new CursorFactory() {
+            @Override
             public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery,
                                     String editTable, SQLiteQuery query) {
                 return new SQLiteCursor(db, masterQuery, editTable, query) {

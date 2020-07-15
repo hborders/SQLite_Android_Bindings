@@ -12,6 +12,7 @@ public interface DatabaseUtilsWrapper<
         SQLiteStatementType extends SQLiteProgramType,
         SQLiteCursorDriverType,
         SQLiteQueryType,
+        CursorFactoryType,
         SQLiteProgramType,
         InsertHelperType
         > {
@@ -47,26 +48,30 @@ public interface DatabaseUtilsWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > db, String table) throws SQLiteExceptionWrapper;
     long queryNumEntries(SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             >  db, String table, String selection);
     long queryNumEntries(SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             >  db, String table, String selection,
                          String[] selectionArgs);
     long longForQuery(SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             >  db, String query, String[] selectionArgs) throws SQLiteDoneExceptionWrapper;
     long longForQuery(SQLiteStatementWrapper<SQLiteStatementType> prog,
                       String[] selectionArgs) throws SQLiteDoneExceptionWrapper;
@@ -74,7 +79,8 @@ public interface DatabaseUtilsWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             >  db, String query, String[] selectionArgs) throws SQLiteDoneExceptionWrapper;
     String stringForQuery(SQLiteStatementWrapper<SQLiteStatementType> prog, String[] selectionArgs);
     ParcelFileDescriptor blobFileDescriptorForQuery(

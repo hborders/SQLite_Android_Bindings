@@ -34,7 +34,8 @@ public abstract class DatabaseUtils_InsertHelperTest<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > extends AndroidTestCase {
     private static final String TEST_TABLE_NAME = "test";
     private static final String DATABASE_NAME = "database_test.db";
@@ -43,7 +44,8 @@ public abstract class DatabaseUtils_InsertHelperTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private InsertHelperWrapper mInsertHelper;
 
@@ -51,14 +53,16 @@ public abstract class DatabaseUtils_InsertHelperTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(String path);
     protected abstract InsertHelperWrapper createInsertHelper(
             SQLiteDatabaseWrapper<
                     SQLiteDatabaseType,
                     SQLiteStatementType,
                     SQLiteCursorDriverType,
-                    SQLiteQueryType
+                    SQLiteQueryType,
+                    CursorFactoryType
                     > database,
             String tableName
     );

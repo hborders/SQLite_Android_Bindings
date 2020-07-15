@@ -39,7 +39,8 @@ public abstract class CursorWrapperTest<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > extends AndroidTestCase {
 
     private static final String FIRST_NUMBER = "123";
@@ -57,7 +58,8 @@ public abstract class CursorWrapperTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private File mDatabaseFile;
     private Cursor mCursor;
@@ -475,7 +477,8 @@ public abstract class CursorWrapperTest<
                     SQLiteDatabaseType,
                     SQLiteStatementType,
                     SQLiteCursorDriverType,
-                    SQLiteQueryType
+                    SQLiteQueryType,
+                    CursorFactoryType
                     > database, int value) throws SQLExceptionWrapper {
         database.execSQL("DELETE FROM test1 WHERE number = " + value + ";");
     }
@@ -484,17 +487,19 @@ public abstract class CursorWrapperTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > database, int value) throws SQLExceptionWrapper {
         database.execSQL("INSERT INTO test1 (number) VALUES ('" + value + "');");
     }
 
     private void deleteAllRecords(
             SQLiteDatabaseWrapper<
-            SQLiteDatabaseType,
+                    SQLiteDatabaseType,
                     SQLiteStatementType,
-            SQLiteCursorDriverType,
-            SQLiteQueryType> database) {
+                    SQLiteCursorDriverType,
+                    SQLiteQueryType,
+                    CursorFactoryType> database) {
         database.delete("test1", null, null);
     }
 
@@ -502,7 +507,8 @@ public abstract class CursorWrapperTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(String path);
 
     private void setupDatabase() throws SQLExceptionWrapper {

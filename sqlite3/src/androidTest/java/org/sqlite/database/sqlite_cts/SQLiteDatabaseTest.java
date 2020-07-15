@@ -53,6 +53,7 @@ public abstract class SQLiteDatabaseTest<
         SQLiteStatementType extends SQLiteProgramType,
         SQLiteCursorDriverType,
         SQLiteQueryType,
+        CursorFactoryType,
         SQLiteProgramType,
         InsertHelperType
         > extends AndroidTestCase {
@@ -60,13 +61,15 @@ public abstract class SQLiteDatabaseTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private DatabaseUtilsWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType,
+            CursorFactoryType,
             SQLiteProgramType,
             InsertHelperType
             > mDatabaseUtils;
@@ -95,7 +98,8 @@ public abstract class SQLiteDatabaseTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(File f);
 
     protected abstract DatabaseUtilsWrapper<
@@ -103,6 +107,7 @@ public abstract class SQLiteDatabaseTest<
             SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType,
+            CursorFactoryType,
             SQLiteProgramType,
             InsertHelperType
             > createDatabaseUtils();

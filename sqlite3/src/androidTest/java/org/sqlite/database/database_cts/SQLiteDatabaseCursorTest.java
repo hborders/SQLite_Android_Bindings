@@ -1,11 +1,11 @@
 package org.sqlite.database.database_cts;
 
 import android.database.Cursor;
-import android.test.suitebuilder.annotation.MediumTest;
 
 import org.sqlite.database.sqlite.SQLiteCursor;
 import org.sqlite.database.sqlite.SQLiteCursorDriver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory;
 import org.sqlite.database.sqlite.SQLiteQuery;
 import org.sqlite.database.sqlite.SQLiteStatement;
 import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
@@ -16,6 +16,7 @@ public final class SQLiteDatabaseCursorTest extends DatabaseCursorTest<
         SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
+        CursorFactory,
         SQLiteCursor
         > {
     @Override
@@ -23,7 +24,8 @@ public final class SQLiteDatabaseCursorTest extends DatabaseCursorTest<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > openOrCreateDatabase(String path) {
         return new SQLiteSQLiteDatabaseWrapper(
                 SQLiteDatabase.openOrCreateDatabase(path, null)
@@ -41,16 +43,9 @@ public final class SQLiteDatabaseCursorTest extends DatabaseCursorTest<
     }
 
     @Override
-    protected SQLiteDatabaseWrapper.CursorFactoryWrapper<
-            SQLiteDatabase,
-            SQLiteCursorDriver,
-            SQLiteQuery
-            > createCursorFactory(final BeforeRequery<SQLiteCursor> beforeRequery) {
-        return new SQLiteDatabaseWrapper.CursorFactoryWrapper<
-                SQLiteDatabase,
-                SQLiteCursorDriver,
-                SQLiteQuery
-                >() {
+    protected CursorFactory createCursorFactory(final BeforeRequery<SQLiteCursor> beforeRequery) {
+        return new CursorFactory() {
+            @Override
             public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery,
                                     String editTable, SQLiteQuery query) {
                 return new SQLiteCursor(db, masterQuery, editTable, query) {

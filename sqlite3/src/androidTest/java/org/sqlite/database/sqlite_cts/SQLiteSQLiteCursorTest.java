@@ -3,6 +3,7 @@ package org.sqlite.database.sqlite_cts;
 import org.sqlite.database.sqlite.SQLiteCursor;
 import org.sqlite.database.sqlite.SQLiteCursorDriver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory;
 import org.sqlite.database.sqlite.SQLiteDirectCursorDriver;
 import org.sqlite.database.sqlite.SQLiteQuery;
 import org.sqlite.database.sqlite.SQLiteStatement;
@@ -18,6 +19,7 @@ public class SQLiteSQLiteCursorTest extends SQLiteCursorTest<
         SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
+        CursorFactory,
         SQLiteCursor
         > {
     public SQLiteSQLiteCursorTest() {
@@ -29,7 +31,8 @@ public class SQLiteSQLiteCursorTest extends SQLiteCursorTest<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > openOrCreateDatabase(File f) {
         return new SQLiteSQLiteDatabaseWrapper(
                 SQLiteDatabase.openOrCreateDatabase(f, null)

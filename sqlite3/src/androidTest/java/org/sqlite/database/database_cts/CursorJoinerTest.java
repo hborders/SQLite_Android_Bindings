@@ -33,7 +33,8 @@ public abstract class CursorJoinerTest<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > extends AndroidTestCase {
 
     private static final int TEST_ITEM_COUNT = 10;
@@ -53,7 +54,8 @@ public abstract class CursorJoinerTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private File mDatabaseFile;
 
@@ -221,7 +223,8 @@ public abstract class CursorJoinerTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(String path);
 
     private void setupDatabase() throws SQLExceptionWrapper {

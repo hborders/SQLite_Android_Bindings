@@ -6,6 +6,7 @@ import android.test.suitebuilder.annotation.MediumTest;
 import org.sqlite.database.DefaultDatabaseErrorHandler;
 import org.sqlite.database.sqlite.SQLiteCursorDriver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory;
 import org.sqlite.database.sqlite.SQLiteQuery;
 import org.sqlite.database.sqlite.SQLiteStatement;
 import org.sqlite.database.wrapper.DefaultDatabaseErrorHandlerWrapper;
@@ -16,14 +17,16 @@ public class SQLiteDatabaseGeneralTest extends DatabaseGeneralTest<
         SQLiteDatabase,
         SQLiteStatement,
         SQLiteCursorDriver,
-        SQLiteQuery
+        SQLiteQuery,
+        CursorFactory
         > {
     @Override
     protected SQLiteDatabaseWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > openOrCreateDatabase(String path) {
         return new SQLiteSQLiteDatabaseWrapper(
                 SQLiteDatabase.openOrCreateDatabase(path, null)
@@ -35,7 +38,8 @@ public class SQLiteDatabaseGeneralTest extends DatabaseGeneralTest<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > createDefaultDatabaseErrorHandler() {
         final DefaultDatabaseErrorHandler defaultDatabaseErrorHandler =
                 new DefaultDatabaseErrorHandler();
@@ -43,14 +47,16 @@ public class SQLiteDatabaseGeneralTest extends DatabaseGeneralTest<
                 SQLiteDatabase,
                 SQLiteStatement,
                 SQLiteCursorDriver,
-                SQLiteQuery
+                SQLiteQuery,
+                CursorFactory
                 >() {
             @Override
             public void onCorruption(SQLiteDatabaseWrapper<
                     SQLiteDatabase,
                     SQLiteStatement,
                     SQLiteCursorDriver,
-                    SQLiteQuery
+                    SQLiteQuery,
+                    CursorFactory
                     > dbObj) {
                 defaultDatabaseErrorHandler.onCorruption(dbObj.getSQLiteDatabase());
             }

@@ -44,6 +44,7 @@ public abstract class DatabaseUtilsTest<
         SQLiteStatementType extends SQLiteProgramType,
         SQLiteCursorDriverType,
         SQLiteQueryType,
+        CursorFactoryType,
         SQLiteProgramType,
         InsertHelperType
         > extends AndroidTestCase {
@@ -51,13 +52,15 @@ public abstract class DatabaseUtilsTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private DatabaseUtilsWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType,
+            CursorFactoryType,
             SQLiteProgramType,
             InsertHelperType
             > mDatabaseUtils;
@@ -74,7 +77,8 @@ public abstract class DatabaseUtilsTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(String path);
 
     protected abstract DatabaseUtilsWrapper<
@@ -82,6 +86,7 @@ public abstract class DatabaseUtilsTest<
             SQLiteStatementType,
             SQLiteCursorDriverType,
             SQLiteQueryType,
+            CursorFactoryType,
             SQLiteProgramType,
             InsertHelperType
             > createDatabaseUtils();
@@ -188,7 +193,8 @@ public abstract class DatabaseUtilsTest<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 > db = openOrCreateDatabase(f.getPath());
 
         final String[] PROJECTION = new String[] {
@@ -380,7 +386,8 @@ public abstract class DatabaseUtilsTest<
                     SQLiteDatabaseType,
                     SQLiteStatementType,
                     SQLiteCursorDriverType,
-                    SQLiteQueryType
+                    SQLiteQueryType,
+                    CursorFactoryType
                     > database,
             String tableName
     );

@@ -6,12 +6,14 @@ public interface DefaultDatabaseErrorHandlerWrapper<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > {
     void onCorruption(SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > dbObj);
 }

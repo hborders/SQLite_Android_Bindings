@@ -8,6 +8,7 @@ import android.os.ParcelFileDescriptor;
 import org.sqlite.database.DatabaseUtils;
 import org.sqlite.database.sqlite.SQLiteCursorDriver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory;
 import org.sqlite.database.sqlite.SQLiteDoneException;
 import org.sqlite.database.sqlite.SQLiteException;
 import org.sqlite.database.sqlite.SQLiteProgram;
@@ -21,6 +22,7 @@ public final class SQLiteDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
         SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
+        CursorFactory,
         SQLiteProgram,
         DatabaseUtils.InsertHelper
         > {
@@ -152,7 +154,8 @@ public final class SQLiteDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String table) throws SQLiteExceptionWrapper {
         try {
             return DatabaseUtils.queryNumEntries(db.getSQLiteDatabase(), table);
@@ -166,7 +169,8 @@ public final class SQLiteDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String table, String selection) {
         return DatabaseUtils.queryNumEntries(db.getSQLiteDatabase(), table, selection);
     }
@@ -176,7 +180,8 @@ public final class SQLiteDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String table, String selection,
                                 String[] selectionArgs) {
         return DatabaseUtils.queryNumEntries(db.getSQLiteDatabase(), table, selection, selectionArgs);
@@ -187,8 +192,9 @@ public final class SQLiteDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
-            >  db, String query, String[] selectionArgs) throws SQLiteDoneExceptionWrapper {
+            SQLiteQuery,
+            CursorFactory
+            > db, String query, String[] selectionArgs) throws SQLiteDoneExceptionWrapper {
         try {
             return DatabaseUtils.longForQuery(db.getSQLiteDatabase(), query, selectionArgs);
         } catch (SQLiteDoneException wrapped) {
@@ -211,7 +217,8 @@ public final class SQLiteDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String query, String[] selectionArgs) throws SQLiteDoneExceptionWrapper {
         try {
             return DatabaseUtils.stringForQuery(db.getSQLiteDatabase(), query, selectionArgs);

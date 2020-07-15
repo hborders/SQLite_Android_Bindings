@@ -39,13 +39,15 @@ public abstract class SQLiteCursorTest<
         SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
+        CursorFactoryType,
         SQLiteCursorType
         > extends AndroidTestCase {
     protected SQLiteDatabaseWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactoryType
             > mDatabase;
     private static final String[] COLUMNS = new String[] { "_id", "number_1", "number_2" };
     protected static final String TABLE_NAME = "test";
@@ -65,7 +67,8 @@ public abstract class SQLiteCursorTest<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactoryType
             > openOrCreateDatabase(File f);
 
     @Override

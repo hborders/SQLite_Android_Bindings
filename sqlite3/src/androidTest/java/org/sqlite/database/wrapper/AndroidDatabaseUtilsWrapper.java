@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteProgram;
@@ -20,6 +21,7 @@ public final class AndroidDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
         SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
+        CursorFactory,
         SQLiteProgram,
         DatabaseUtils.InsertHelper
         > {
@@ -151,7 +153,8 @@ public final class AndroidDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String table) throws SQLiteExceptionWrapper {
         try {
             return DatabaseUtils.queryNumEntries(db.getSQLiteDatabase(), table);
@@ -165,7 +168,8 @@ public final class AndroidDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String table, String selection) {
         return DatabaseUtils.queryNumEntries(db.getSQLiteDatabase(), table, selection);
     }
@@ -175,7 +179,8 @@ public final class AndroidDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String table, String selection,
                                 String[] selectionArgs) {
         return DatabaseUtils.queryNumEntries(db.getSQLiteDatabase(), table, selection, selectionArgs);
@@ -186,7 +191,8 @@ public final class AndroidDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String query, String[] selectionArgs) throws SQLiteDoneExceptionWrapper {
         try {
             return DatabaseUtils.longForQuery(db.getSQLiteDatabase(), query, selectionArgs);
@@ -210,7 +216,8 @@ public final class AndroidDatabaseUtilsWrapper implements DatabaseUtilsWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > db, String query, String[] selectionArgs) throws SQLiteDoneExceptionWrapper {
         try {
             return DatabaseUtils.stringForQuery(db.getSQLiteDatabase(), query, selectionArgs);

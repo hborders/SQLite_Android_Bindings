@@ -3,6 +3,7 @@ package org.sqlite.database.sqlite_cts;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
 
@@ -18,6 +19,7 @@ public class AndroidSQLiteCursorTest extends SQLiteCursorTest<
         SQLiteStatement,
         SQLiteCursorDriver,
         SQLiteQuery,
+        CursorFactory,
         SQLiteCursor
         > {
     public AndroidSQLiteCursorTest() {
@@ -29,7 +31,8 @@ public class AndroidSQLiteCursorTest extends SQLiteCursorTest<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > openOrCreateDatabase(File f) {
         return new AndroidSQLiteDatabaseWrapper(
                 SQLiteDatabase.openOrCreateDatabase(f, null)

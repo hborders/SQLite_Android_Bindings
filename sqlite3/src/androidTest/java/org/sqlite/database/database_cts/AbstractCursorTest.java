@@ -43,7 +43,8 @@ public abstract class AbstractCursorTest<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > extends InstrumentationTestCase {
     private static final int POSITION0 = 0;
     private static final int POSITION1 = 1;
@@ -61,7 +62,8 @@ public abstract class AbstractCursorTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private File mDatabaseFile;
     private AbstractCursor mDatabaseCursor;
@@ -431,7 +433,8 @@ public abstract class AbstractCursorTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(String path);
 
     private void setupDatabase() throws SQLExceptionWrapper {

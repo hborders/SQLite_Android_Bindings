@@ -3,6 +3,7 @@ package org.sqlite.database.database_cts;
 
 import org.sqlite.database.sqlite.SQLiteCursorDriver;
 import org.sqlite.database.sqlite.SQLiteDatabase;
+import org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory;
 import org.sqlite.database.sqlite.SQLiteQuery;
 import org.sqlite.database.sqlite.SQLiteStatement;
 import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
@@ -12,14 +13,16 @@ public final class SQLiteCursorWrapperTest extends CursorWrapperTest<
         SQLiteDatabase,
         SQLiteStatement,
         SQLiteCursorDriver,
-        SQLiteQuery
+        SQLiteQuery,
+        CursorFactory
         > {
     @Override
     protected SQLiteDatabaseWrapper<
             SQLiteDatabase,
             SQLiteStatement,
             SQLiteCursorDriver,
-            SQLiteQuery
+            SQLiteQuery,
+            CursorFactory
             > openOrCreateDatabase(String path) {
         return new SQLiteSQLiteDatabaseWrapper(
                 SQLiteDatabase.openOrCreateDatabase(path, null)

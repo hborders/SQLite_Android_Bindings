@@ -12,18 +12,9 @@ public interface SQLiteDatabaseWrapper<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > {
-    interface CursorFactoryWrapper<
-            SQLiteDatabaseType,
-            SQLiteCursorDriverType,
-            SQLiteQueryType
-            > {
-        Cursor newCursor(SQLiteDatabaseType db,
-                         SQLiteCursorDriverType masterQuery, String editTable,
-                         SQLiteQueryType query);
-    }
-
     SQLiteDatabaseType getSQLiteDatabase();
 
     int getMaxSqlCacheSize();
@@ -62,20 +53,12 @@ public interface SQLiteDatabaseWrapper<
                  String having, String orderBy, String limit,
                  CancellationSignal cancellationSignal);
     Cursor queryWithFactory(
-            CursorFactoryWrapper<
-                    SQLiteDatabaseType,
-                    SQLiteCursorDriverType,
-                    SQLiteQueryType
-                    > cursorFactory,
+            CursorFactoryType cursorFactory,
             boolean distinct, String table, String[] columns,
             String selection, String[] selectionArgs, String groupBy,
             String having, String orderBy, String limit);
     Cursor queryWithFactory(
-            CursorFactoryWrapper<
-                    SQLiteDatabaseType,
-                    SQLiteCursorDriverType,
-                    SQLiteQueryType
-                    > cursorFactory,
+            CursorFactoryType cursorFactory,
             boolean distinct, String table, String[] columns,
             String selection, String[] selectionArgs, String groupBy,
             String having, String orderBy, String limit, CancellationSignal cancellationSignal);
@@ -89,18 +72,10 @@ public interface SQLiteDatabaseWrapper<
     Cursor rawQuery(String sql, String[] selectionArgs,
                     CancellationSignal cancellationSignal);
     Cursor rawQueryWithFactory(
-            CursorFactoryWrapper<
-                    SQLiteDatabaseType,
-                    SQLiteCursorDriverType,
-                    SQLiteQueryType
-                    > cursorFactory, String sql, String[] selectionArgs,
-            String editTable);
+            CursorFactoryType cursorFactory, String sql,
+            String[] selectionArgs, String editTable);
     Cursor rawQueryWithFactory(
-            CursorFactoryWrapper<
-                    SQLiteDatabaseType,
-                    SQLiteCursorDriverType,
-                    SQLiteQueryType
-                    > cursorFactory, String sql, String[] selectionArgs,
+            CursorFactoryType cursorFactory, String sql, String[] selectionArgs,
             String editTable, CancellationSignal cancellationSignal);
     long insert(String table, String nullColumnHack, ContentValues values);
     long insertOrThrow(String table, String nullColumnHack, ContentValues values)

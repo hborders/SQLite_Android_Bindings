@@ -6,6 +6,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteDoneException;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
@@ -21,31 +22,9 @@ public final class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper
         SQLiteDatabase,
         SQLiteStatement,
         SQLiteCursorDriver,
-        SQLiteQuery
+        SQLiteQuery,
+        CursorFactory
         > {
-    private static final class AndroidCursorFactory implements SQLiteDatabase.CursorFactory {
-        private final CursorFactoryWrapper<
-                SQLiteDatabase,
-                SQLiteCursorDriver,
-                SQLiteQuery
-                > cursorFactoryWrapper;
-
-        private AndroidCursorFactory(
-                CursorFactoryWrapper<
-                        SQLiteDatabase,
-                        SQLiteCursorDriver,
-                        SQLiteQuery
-                        > cursorFactoryWrapper) {
-            this.cursorFactoryWrapper = cursorFactoryWrapper;
-        }
-
-        @Override
-        public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery,
-                                String editTable, SQLiteQuery query) {
-            return cursorFactoryWrapper.newCursor(db, masterQuery, editTable, query);
-        }
-    }
-
     private final SQLiteDatabase sqliteDatabase;
 
     public AndroidSQLiteDatabaseWrapper(SQLiteDatabase sqliteDatabase) {
@@ -301,16 +280,11 @@ public final class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper
 
     @Override
     public Cursor queryWithFactory(
-            CursorFactoryWrapper<
-                    SQLiteDatabase,
-                    SQLiteCursorDriver,
-                    SQLiteQuery
-                    > cursorFactory, boolean distinct, String table, String[] columns,
+            CursorFactory cursorFactory, boolean distinct, String table, String[] columns,
             String selection, String[] selectionArgs, String groupBy,
             String having, String orderBy, String limit) {
         return sqliteDatabase.queryWithFactory(
-                new AndroidCursorFactory(cursorFactory),
-                distinct, table, columns,
+                cursorFactory, distinct, table, columns,
                 selection, selectionArgs, groupBy,
                 having, orderBy, limit
         );
@@ -318,16 +292,11 @@ public final class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper
 
     @Override
     public Cursor queryWithFactory(
-            CursorFactoryWrapper<
-                    SQLiteDatabase,
-                    SQLiteCursorDriver,
-                    SQLiteQuery
-                    > cursorFactory, boolean distinct, String table, String[] columns,
+            CursorFactory cursorFactory, boolean distinct, String table, String[] columns,
             String selection, String[] selectionArgs, String groupBy, String having,
             String orderBy, String limit, CancellationSignal cancellationSignal) {
         return sqliteDatabase.queryWithFactory(
-                new AndroidCursorFactory(cursorFactory),
-                distinct, table, columns,
+                cursorFactory, distinct, table, columns,
                 selection, selectionArgs, groupBy,
                 having, orderBy, limit, cancellationSignal
         );
@@ -363,28 +332,18 @@ public final class AndroidSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper
 
     @Override
     public Cursor rawQueryWithFactory(
-            CursorFactoryWrapper<
-                    SQLiteDatabase,
-                    SQLiteCursorDriver,
-                    SQLiteQuery
-                    > cursorFactory, String sql, String[] selectionArgs, String editTable) {
+            CursorFactory cursorFactory, String sql, String[] selectionArgs, String editTable) {
         return sqliteDatabase.rawQueryWithFactory(
-                new AndroidCursorFactory(cursorFactory),
-                sql, selectionArgs, editTable
+                cursorFactory, sql, selectionArgs, editTable
         );
     }
 
     @Override
     public Cursor rawQueryWithFactory(
-            CursorFactoryWrapper<
-                    SQLiteDatabase,
-                    SQLiteCursorDriver,
-                    SQLiteQuery
-                    > cursorFactory, String sql, String[] selectionArgs,
+            CursorFactory cursorFactory, String sql, String[] selectionArgs,
             String editTable, CancellationSignal cancellationSignal) {
         return sqliteDatabase.rawQueryWithFactory(
-                new AndroidCursorFactory(cursorFactory),
-                sql, selectionArgs, editTable, cancellationSignal
+                cursorFactory, sql, selectionArgs, editTable, cancellationSignal
         );
     }
 

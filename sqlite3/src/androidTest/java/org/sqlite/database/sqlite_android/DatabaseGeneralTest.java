@@ -52,7 +52,8 @@ public abstract class DatabaseGeneralTest<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > extends AndroidTestCase implements PerformanceTestCase {
     private static final String TAG = "DatabaseGeneralTest";
 
@@ -66,7 +67,8 @@ public abstract class DatabaseGeneralTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private File mDatabaseFile;
 
@@ -74,7 +76,8 @@ public abstract class DatabaseGeneralTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(String path);
 
     @Override
@@ -404,7 +407,8 @@ public abstract class DatabaseGeneralTest<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 > db1 = mDatabase;
         Cursor cursor;
 
@@ -967,7 +971,8 @@ public abstract class DatabaseGeneralTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > createDefaultDatabaseErrorHandler();
 
     @LargeTest
@@ -976,7 +981,8 @@ public abstract class DatabaseGeneralTest<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 > errorHandler = createDefaultDatabaseErrorHandler();
 
         // close the database. and call corruption handler.
@@ -997,7 +1003,8 @@ public abstract class DatabaseGeneralTest<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 > memoryDb = openOrCreateDatabase(":memory:");
         assertNotNull(memoryDb);
         memoryDb.close();
@@ -1013,7 +1020,8 @@ public abstract class DatabaseGeneralTest<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 > dbObj = openOrCreateDatabase(mDatabase.getPath());
         assertTrue(dbfile.exists());
         assertNotNull(dbObj);
@@ -1085,7 +1093,8 @@ public abstract class DatabaseGeneralTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > db, String query, String[] selectionArgs
     ) throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
         SQLiteStatementWrapper<
@@ -1116,7 +1125,8 @@ public abstract class DatabaseGeneralTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > db, String query, String[] selectionArgs
     ) throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
         SQLiteStatementWrapper<SQLiteStatementType> prog = db.compileStatement(query);

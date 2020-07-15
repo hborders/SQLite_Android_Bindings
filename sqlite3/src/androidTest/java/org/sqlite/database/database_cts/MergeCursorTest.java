@@ -35,7 +35,8 @@ public abstract class MergeCursorTest<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > extends AndroidTestCase {
     private final int NUMBER_1_COLUMN_INDEX = 1;
     private static final String TABLE1_NAME = "test1";
@@ -49,7 +50,8 @@ public abstract class MergeCursorTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private File mDatabaseFile;
 
@@ -340,7 +342,8 @@ public abstract class MergeCursorTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(String path);
 
     private void setupDatabase() throws SQLExceptionWrapper {

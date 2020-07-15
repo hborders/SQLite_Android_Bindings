@@ -47,6 +47,7 @@ public abstract class DatabaseCursorTest<
         SQLiteStatementType,
         SQLiteCursorDriverType,
         SQLiteQueryType,
+        CursorFactoryType,
         SQLiteCursorType
         > extends AndroidTestCase implements PerformanceTestCase {
     private static final String sString1 = "this is a test";
@@ -58,7 +59,8 @@ public abstract class DatabaseCursorTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
     private File mDatabaseFile;
     protected static final int TYPE_CURSOR = 0;
@@ -69,7 +71,8 @@ public abstract class DatabaseCursorTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(String path);
 
     @Override
@@ -497,11 +500,7 @@ public abstract class DatabaseCursorTest<
             SQLiteCursorType cursor
     );
 
-    protected abstract SQLiteDatabaseWrapper.CursorFactoryWrapper<
-            SQLiteDatabaseType,
-            SQLiteCursorDriverType,
-            SQLiteQueryType
-            > createCursorFactory(BeforeRequery<SQLiteCursorType> beforeRequery);
+    protected abstract CursorFactoryType createCursorFactory(BeforeRequery<SQLiteCursorType> beforeRequery);
 
     @MediumTest
     public void testRequeryWithAlteredSelectionArgs() throws Exception {
@@ -510,11 +509,7 @@ public abstract class DatabaseCursorTest<
          */
         populateDefaultTable();
 
-        SQLiteDatabaseWrapper.CursorFactoryWrapper<
-                SQLiteDatabaseType,
-                SQLiteCursorDriverType,
-                SQLiteQueryType
-                > factory = createCursorFactory(new BeforeRequery<SQLiteCursorType>() {
+        CursorFactoryType factory = createCursorFactory(new BeforeRequery<SQLiteCursorType>() {
             @Override
             public void beforeRequery(SQLiteCursorType cursor) {
                 SetSelectionArguments setSelectionArguments = createSetSelectionArguments(cursor);

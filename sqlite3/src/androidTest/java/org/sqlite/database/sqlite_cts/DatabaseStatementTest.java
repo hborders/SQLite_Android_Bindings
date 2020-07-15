@@ -39,7 +39,8 @@ public abstract class DatabaseStatementTest<
         SQLiteDatabaseType,
         SQLiteStatementType,
         SQLiteCursorDriverType,
-        SQLiteQueryType
+        SQLiteQueryType,
+        CursorFactoryType
         > extends AndroidTestCase implements PerformanceTestCase {
 
     private static final String sString1 = "this is a test";
@@ -53,14 +54,16 @@ public abstract class DatabaseStatementTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > mDatabase;
 
     protected abstract SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > openOrCreateDatabase(File f);
 
     @Override
@@ -269,13 +272,15 @@ public abstract class DatabaseStatementTest<
             SQLiteDatabaseType,
             SQLiteStatementType,
             SQLiteCursorDriverType,
-            SQLiteQueryType
+            SQLiteQueryType,
+            CursorFactoryType
             > extends Thread {
         private SQLiteDatabaseWrapper<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 > mDatabase;
         private SQLiteStatementWrapper<SQLiteStatementType> mStatement;
 
@@ -283,7 +288,8 @@ public abstract class DatabaseStatementTest<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 > db, SQLiteStatementWrapper<SQLiteStatementType> statement) {
             super();
             mDatabase = db;
@@ -330,12 +336,14 @@ public abstract class DatabaseStatementTest<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 > thread = new StatementTestThread<
                 SQLiteDatabaseType,
                 SQLiteStatementType,
                 SQLiteCursorDriverType,
-                SQLiteQueryType
+                SQLiteQueryType,
+                CursorFactoryType
                 >(mDatabase, statement);
         thread.start();
         try {
