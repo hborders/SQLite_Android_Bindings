@@ -16,37 +16,25 @@
 
 package org.sqlite.database.sqlite_cts;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
-
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
-import org.sqlite.database.DatabaseUtils;
-import org.sqlite.database.SQLException;
-import org.sqlite.database.sqlite.SQLiteCursor;
-import org.sqlite.database.sqlite.SQLiteCursorDriver;
+import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.LargeTest;
+
 import org.sqlite.database.sqlite.SQLiteDatabase;
-import org.sqlite.database.sqlite.SQLiteDatabase.CursorFactory;
-import org.sqlite.database.sqlite.SQLiteException;
-import org.sqlite.database.sqlite.SQLiteQuery;
-import org.sqlite.database.sqlite.SQLiteStatement;
-import org.sqlite.database.sqlite.SQLiteTransactionListener;
 import org.sqlite.database.wrapper.DatabaseUtilsWrapper;
 import org.sqlite.database.wrapper.SQLExceptionWrapper;
 import org.sqlite.database.wrapper.SQLiteConstraintExceptionWrapper;
+import org.sqlite.database.wrapper.SQLiteDatabaseFlags;
 import org.sqlite.database.wrapper.SQLiteDatabaseWrapper;
 import org.sqlite.database.wrapper.SQLiteDoneExceptionWrapper;
 import org.sqlite.database.wrapper.SQLiteStatementWrapper;
+import org.sqlite.database.wrapper.SQLiteTransactionListenerWrapper;
 
-import android.test.AndroidTestCase;
-import android.test.MoreAsserts;
-import android.test.suitebuilder.annotation.LargeTest;
-import android.test.suitebuilder.annotation.SmallTest;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class SQLiteDatabaseTest<
         SQLiteDatabaseType,
@@ -54,9 +42,12 @@ public abstract class SQLiteDatabaseTest<
         SQLiteCursorDriverType,
         SQLiteQueryType,
         CursorFactoryType,
+        MockSQLiteCursorType,
         SQLiteProgramType,
         InsertHelperType
         > extends AndroidTestCase {
+    private final Class<MockSQLiteCursorType> mockSQLiteCursorClass;
+    private final SQLiteDatabaseFlags mSQLiteDatabaseFlags;
     private SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
@@ -94,6 +85,14 @@ public abstract class SQLiteDatabaseTest<
             "address"   // 3
     };
 
+    protected SQLiteDatabaseTest(
+            Class<MockSQLiteCursorType> mockSQLiteCursorClass,
+            SQLiteDatabaseFlags sqLiteDatabaseFlags
+    ) {
+        this.mockSQLiteCursorClass = mockSQLiteCursorClass;
+        this.mSQLiteDatabaseFlags = sqLiteDatabaseFlags;
+    }
+
     protected abstract SQLiteDatabaseWrapper<
             SQLiteDatabaseType,
             SQLiteStatementType,
@@ -101,6 +100,68 @@ public abstract class SQLiteDatabaseTest<
             SQLiteQueryType,
             CursorFactoryType
             > openOrCreateDatabase(File f);
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType,
+            CursorFactoryType
+            > openDatabase(
+            String path,
+            CursorFactoryType factory,
+            int flags
+    );
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType,
+            CursorFactoryType
+            > openDatabaseWithNullErrorHandler(
+            String path,
+            CursorFactoryType factory,
+            int flags
+    );
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType,
+            CursorFactoryType
+            > openOrCreateDatabase(
+            String path,
+            CursorFactoryType factory
+    );
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType,
+            CursorFactoryType
+            > openOrCreateDatabase(
+            File f,
+            CursorFactoryType factory
+    );
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType,
+            CursorFactoryType
+            > create(CursorFactoryType factory);
+
+    protected abstract SQLiteDatabaseWrapper<
+            SQLiteDatabaseType,
+            SQLiteStatementType,
+            SQLiteCursorDriverType,
+            SQLiteQueryType,
+            CursorFactoryType
+            > openOrCreateDatabaseWithNullErrorHandler(String path, CursorFactoryType factory);
 
     protected abstract DatabaseUtilsWrapper<
             SQLiteDatabaseType,
@@ -131,6 +192,8 @@ public abstract class SQLiteDatabaseTest<
         mTransactionListenerOnRollbackCalled = false;
     }
 
+    protected abstract CursorFactoryType createCursorFactory();
+
     @Override
     protected void tearDown() throws Exception {
         mDatabase.close();
@@ -139,36 +202,39 @@ public abstract class SQLiteDatabaseTest<
     }
 
     public void testOpenDatabase() {
-        CursorFactory factory = new CursorFactory() {
-            public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery,
-                    String editTable, SQLiteQuery query) {
-                return new MockSQLiteCursor(db, masterQuery, editTable, query);
-            }
-        };
+        CursorFactoryType factory = createCursorFactory();
 
-        SQLiteDatabase db = SQLiteDatabase.openDatabase(mDatabaseFilePath,
-                factory, SQLiteDatabase.CREATE_IF_NECESSARY);
+        SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType,
+                CursorFactoryType
+                > db = openDatabase(mDatabaseFilePath,
+                factory, mSQLiteDatabaseFlags.getCreateIfNecessary());
         assertNotNull(db);
         db.close();
 
         File dbFile = new File(mDatabaseDir, "database_test12345678.db");
         dbFile.delete();
         assertFalse(dbFile.exists());
-        db = SQLiteDatabase.openOrCreateDatabase(dbFile.getPath(), factory);
+        db = openOrCreateDatabase(dbFile.getPath(), factory);
         assertNotNull(db);
         db.close();
         dbFile.delete();
 
         dbFile = new File(mDatabaseDir, DATABASE_FILE_NAME);
-        db = SQLiteDatabase.openOrCreateDatabase(dbFile, factory);
+        db = openOrCreateDatabase(dbFile, factory);
         assertNotNull(db);
         db.close();
         dbFile.delete();
 
-        db = SQLiteDatabase.create(factory);
+        db = create(factory);
         assertNotNull(db);
         db.close();
     }
+
+    protected abstract boolean deleteDatabase(File f);
 
     public void testDeleteDatabase() throws IOException {
         File dbFile = new File(mDatabaseDir, "database_test12345678.db");
@@ -187,7 +253,7 @@ public abstract class SQLiteDatabaseTest<
         mjFile2.createNewFile();
         innocentFile.createNewFile();
 
-        boolean deleted = SQLiteDatabase.deleteDatabase(dbFile);
+        boolean deleted = deleteDatabase(dbFile);
         assertTrue(deleted);
 
         assertFalse(dbFile.exists());
@@ -200,15 +266,8 @@ public abstract class SQLiteDatabaseTest<
 
         innocentFile.delete();
 
-        boolean deletedAgain = SQLiteDatabase.deleteDatabase(dbFile);
+        boolean deletedAgain = deleteDatabase(dbFile);
         assertFalse(deletedAgain);
-    }
-
-    private class MockSQLiteCursor extends SQLiteCursor {
-        public MockSQLiteCursor(SQLiteDatabase db, SQLiteCursorDriver driver,
-                String editTable, SQLiteQuery query) {
-            super(db, driver, editTable, query);
-        }
     }
 
     public void testTransaction() throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
@@ -355,9 +414,15 @@ public abstract class SQLiteDatabaseTest<
         if (databaseFile.exists()) {
             databaseFile.delete();
         }
-        SQLiteDatabase database = null;
+        SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType,
+                CursorFactoryType
+                > database = null;
         try {
-            database = SQLiteDatabase.openOrCreateDatabase(databaseFile.getPath(), null);
+            database = openOrCreateDatabase(databaseFile.getPath(), null);
 
             long initialValue = database.getPageSize();
             // check that this does not throw an exception
@@ -529,7 +594,7 @@ public abstract class SQLiteDatabaseTest<
             // execSQL can not use for query.
             mDatabase.execSQL("SELECT * FROM test;");
             fail("should throw SQLException.");
-        } catch (SQLException e) {
+        } catch (SQLExceptionWrapper ignored) {
         }
 
         // make sure execSQL can't be used to execute more than 1 sql statement at a time
@@ -558,20 +623,22 @@ public abstract class SQLiteDatabaseTest<
         cursor.close();;
     }
 
+    protected abstract String findEditTable(String tables);
+
     public void testFindEditTable() {
         String tables = "table1 table2 table3";
-        assertEquals("table1", SQLiteDatabase.findEditTable(tables));
+        assertEquals("table1", findEditTable(tables));
 
         tables = "table1,table2,table3";
-        assertEquals("table1", SQLiteDatabase.findEditTable(tables));
+        assertEquals("table1", findEditTable(tables));
 
         tables = "table1";
-        assertEquals("table1", SQLiteDatabase.findEditTable(tables));
+        assertEquals("table1", findEditTable(tables));
 
         try {
-            SQLiteDatabase.findEditTable("");
+            findEditTable("");
             fail("should throw IllegalStateException.");
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException ignored) {
         }
     }
 
@@ -667,7 +734,7 @@ public abstract class SQLiteDatabaseTest<
         try {
             mDatabase.insertOrThrow(TABLE_NAME, "name", values);
             fail("should throw SQLException.");
-        } catch (SQLException e) {
+        } catch (SQLExceptionWrapper ignored) {
         }
     }
 
@@ -681,10 +748,16 @@ public abstract class SQLiteDatabaseTest<
     public void testIsReadOnly() {
         assertFalse(mDatabase.isReadOnly());
 
-        SQLiteDatabase database = null;
+        SQLiteDatabaseWrapper<
+                SQLiteDatabaseType,
+                SQLiteStatementType,
+                SQLiteCursorDriverType,
+                SQLiteQueryType,
+                CursorFactoryType
+                > database = null;
         try {
-            database = SQLiteDatabase.openDatabase(mDatabaseFilePath, null,
-                    SQLiteDatabase.OPEN_READONLY);
+            database = openDatabase(mDatabaseFilePath, null,
+                    mSQLiteDatabaseFlags.getOpenReadonly());
             assertTrue(database.isReadOnly());
         } finally {
             if (database != null) {
@@ -693,8 +766,10 @@ public abstract class SQLiteDatabaseTest<
         }
     }
 
+    protected abstract void releaseMemory();
+
     public void testReleaseMemory() {
-        SQLiteDatabase.releaseMemory();
+        releaseMemory();
     }
 
     public void testSetLockingEnabled() throws SQLExceptionWrapper, SQLiteDoneExceptionWrapper {
@@ -835,17 +910,12 @@ public abstract class SQLiteDatabaseTest<
         assertEquals(3500, cursor.getInt(COLUMN_SALARY_INDEX));
         cursor.close();
 
-        CursorFactory factory = new CursorFactory() {
-            public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery,
-                    String editTable, SQLiteQuery query) {
-                return new MockSQLiteCursor(db, masterQuery, editTable, query);
-            }
-        };
+        CursorFactoryType factory = createCursorFactory();
         cursor = mDatabase.queryWithFactory(factory, true, "employee",
                 new String[] { "name", "sum(salary)" },
                 null, null, "name", "sum(salary) > 1000", "name", null);
         assertNotNull(cursor);
-        assertTrue(cursor instanceof MockSQLiteCursor);
+        assertTrue(mockSQLiteCursorClass.isInstance(cursor));
         cursor.moveToFirst();
         assertEquals("Jim", cursor.getString(COLUMN_NAME_INDEX));
         assertEquals(4500, cursor.getInt(COLUMN_SALARY_INDEX));
@@ -900,7 +970,7 @@ public abstract class SQLiteDatabaseTest<
         cursor = mDatabase.rawQueryWithFactory(factory, sql, new String[] { "2000" }, null);
         assertNotNull(cursor);
         assertEquals(2, cursor.getCount());
-        assertTrue(cursor instanceof MockSQLiteCursor);
+        assertTrue(mockSQLiteCursorClass.isInstance(cursor));
         cursor.moveToFirst();
         assertEquals("Mike", cursor.getString(COLUMN_NAME_INDEX));
         assertEquals(2, cursor.getInt(COLUMN_MONTH_INDEX));
@@ -910,7 +980,7 @@ public abstract class SQLiteDatabaseTest<
         cursor.close();
     }
 
-    public void testReplace() {
+    public void testReplace() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, "
                 + "name TEXT, age INTEGER, address TEXT);");
 
@@ -971,11 +1041,11 @@ public abstract class SQLiteDatabaseTest<
         try {
             mDatabase.replaceOrThrow(TABLE_NAME, "name", values);
             fail("should throw SQLException.");
-        } catch (SQLException e) {
+        } catch (SQLExceptionWrapper ignored) {
         }
     }
 
-    public void testUpdate() {
+    public void testUpdate() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (_id INTEGER PRIMARY KEY, data TEXT);");
 
         mDatabase.execSQL("INSERT INTO test (data) VALUES ('string1');");
@@ -1051,7 +1121,7 @@ public abstract class SQLiteDatabaseTest<
         assertFalse(mDatabase.isOpen());
     }
 
-    public void testTransactionWithSQLiteTransactionListener() {
+    public void testTransactionWithSQLiteTransactionListener() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
         mDatabase.execSQL("INSERT INTO test (num) VALUES (0)");
 
@@ -1082,7 +1152,7 @@ public abstract class SQLiteDatabaseTest<
         assertEquals(mTransactionListenerOnRollbackCalled, false);
     }
 
-    public void testRollbackTransactionWithSQLiteTransactionListener() {
+    public void testRollbackTransactionWithSQLiteTransactionListener() throws SQLExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
         mDatabase.execSQL("INSERT INTO test (num) VALUES (0)");
 
@@ -1112,29 +1182,32 @@ public abstract class SQLiteDatabaseTest<
         assertEquals(mTransactionListenerOnRollbackCalled, true);
     }
 
-    private class TestSQLiteTransactionListener implements SQLiteTransactionListener {
+    private class TestSQLiteTransactionListener implements SQLiteTransactionListenerWrapper {
+        @Override
         public void onBegin() {
             mTransactionListenerOnBeginCalled = true;
         }
 
+        @Override
         public void onCommit() {
             mTransactionListenerOnCommitCalled = true;
         }
 
+        @Override
         public void onRollback() {
             mTransactionListenerOnRollbackCalled = true;
         }
     }
 
-    public void testGroupConcat() {
+    public void testGroupConcat() throws SQLExceptionWrapper, SQLiteConstraintExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (i INT, j TEXT);");
 
         // insert 2 rows
         String sql = "INSERT INTO test (i) VALUES (?);";
-        SQLiteStatement insertStatement = mDatabase.compileStatement(sql);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 1, 1);
+        SQLiteStatementWrapper<SQLiteStatementType> insertStatement = mDatabase.compileStatement(sql);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 1, 1);
         insertStatement.execute();
-        DatabaseUtils.bindObjectToProgram(insertStatement, 1, 2);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 1, 2);
         insertStatement.execute();
         insertStatement.close();
 
@@ -1159,7 +1232,7 @@ public abstract class SQLiteDatabaseTest<
         // should get no exceptions
     }
 
-    public void testSchemaChanges() {
+    public void testSchemaChanges() throws SQLExceptionWrapper, SQLiteConstraintExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (i INT, j INT);");
 
         // at the beginning, there is no record in the database.
@@ -1169,9 +1242,9 @@ public abstract class SQLiteDatabaseTest<
         cursor.close();
 
         String sql = "INSERT INTO test VALUES (?, ?);";
-        SQLiteStatement insertStatement = mDatabase.compileStatement(sql);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 1, 1);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 2, 2);
+        SQLiteStatementWrapper<SQLiteStatementType> insertStatement = mDatabase.compileStatement(sql);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 1, 1);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 2, 2);
         insertStatement.execute();
         insertStatement.close();
 
@@ -1188,9 +1261,9 @@ public abstract class SQLiteDatabaseTest<
         mDatabase.execSQL("ALTER TABLE test ADD COLUMN k int;");
         sql = "INSERT INTO test VALUES (?, ?, ?);";
         insertStatement = mDatabase.compileStatement(sql);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 1, 3);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 2, 4);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 3, 5);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 1, 3);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 2, 4);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 3, 5);
         insertStatement.execute();
         insertStatement.close();
 
@@ -1221,12 +1294,12 @@ public abstract class SQLiteDatabaseTest<
         assertEquals(4, cursor.getInt(1));
         cursor.close();
 
-        SQLiteStatement deleteStatement = mDatabase.compileStatement("DELETE FROM test");
+        SQLiteStatementWrapper<SQLiteStatementType> deleteStatement = mDatabase.compileStatement("DELETE FROM test");
         deleteStatement.execute();
         deleteStatement.close();
     }
 
-    public void testSchemaChangesNewTable() {
+    public void testSchemaChangesNewTable() throws SQLExceptionWrapper, SQLiteConstraintExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (i INT, j INT);");
 
         // at the beginning, there is no record in the database.
@@ -1236,9 +1309,9 @@ public abstract class SQLiteDatabaseTest<
         cursor.close();
 
         String sql = "INSERT INTO test VALUES (?, ?);";
-        SQLiteStatement insertStatement = mDatabase.compileStatement(sql);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 1, 1);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 2, 2);
+        SQLiteStatementWrapper<SQLiteStatementType> insertStatement = mDatabase.compileStatement(sql);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 1, 1);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 2, 2);
         insertStatement.execute();
         insertStatement.close();
 
@@ -1255,9 +1328,9 @@ public abstract class SQLiteDatabaseTest<
         mDatabase.execSQL("CREATE TABLE test_new (i INT, j INT, k INT);");
         sql = "INSERT INTO test_new VALUES (?, ?, ?);";
         insertStatement = mDatabase.compileStatement(sql);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 1, 3);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 2, 4);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 3, 5);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 1, 3);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 2, 4);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 3, 5);
         insertStatement.execute();
         insertStatement.close();
 
@@ -1281,16 +1354,16 @@ public abstract class SQLiteDatabaseTest<
         assertEquals(2, cursor.getInt(1));
         cursor.close();
 
-        SQLiteStatement deleteStatement = mDatabase.compileStatement("DELETE FROM test");
+        SQLiteStatementWrapper<SQLiteStatementType> deleteStatement = mDatabase.compileStatement("DELETE FROM test");
         deleteStatement.execute();
         deleteStatement.close();
 
-        SQLiteStatement deleteStatement2 = mDatabase.compileStatement("DELETE FROM test_new");
+        SQLiteStatementWrapper<SQLiteStatementType> deleteStatement2 = mDatabase.compileStatement("DELETE FROM test_new");
         deleteStatement2.execute();
         deleteStatement2.close();
     }
 
-    public void testSchemaChangesDropTable() {
+    public void testSchemaChangesDropTable() throws SQLExceptionWrapper, SQLiteConstraintExceptionWrapper {
         mDatabase.execSQL("CREATE TABLE test (i INT, j INT);");
 
         // at the beginning, there is no record in the database.
@@ -1300,9 +1373,9 @@ public abstract class SQLiteDatabaseTest<
         cursor.close();
 
         String sql = "INSERT INTO test VALUES (?, ?);";
-        SQLiteStatement insertStatement = mDatabase.compileStatement(sql);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 1, 1);
-        DatabaseUtils.bindObjectToProgram(insertStatement, 2, 2);
+        SQLiteStatementWrapper<SQLiteStatementType> insertStatement = mDatabase.compileStatement(sql);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 1, 1);
+        mDatabaseUtils.bindObjectToProgram(insertStatement, 2, 2);
         insertStatement.execute();
         insertStatement.close();
 
@@ -1336,11 +1409,11 @@ public abstract class SQLiteDatabaseTest<
      * @throws InterruptedException
      */
     @LargeTest
-    public void testReaderGetsOldVersionOfDataWhenWriterIsInXact() throws InterruptedException {
+    public void testReaderGetsOldVersionOfDataWhenWriterIsInXact() throws InterruptedException, SQLExceptionWrapper {
         // redo setup to create WAL enabled database
         mDatabase.close();
         new File(mDatabase.getPath()).delete();
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null, null);
+        mDatabase = openOrCreateDatabaseWithNullErrorHandler(mDatabaseFile.getPath(), null);
         boolean rslt = mDatabase.enableWriteAheadLogging();
         assertTrue(rslt);
         assertNotNull(mDatabase);
@@ -1369,7 +1442,11 @@ public abstract class SQLiteDatabaseTest<
         @Override public void run() {
             // start a transaction
             mDatabase.beginTransactionNonExclusive();
-            mDatabase.execSQL("insert into t1 values(?,?);", new String[] {"11", "11"});
+            try {
+                mDatabase.execSQL("insert into t1 values(?,?);", new String[] {"11", "11"});
+            } catch (SQLExceptionWrapper wrapped) {
+                throw new RuntimeException(wrapped);
+            }
             assertTrue(mDatabase.isOpen());
 
             // while the writer is in a transaction, start a reader and make sure it can still
@@ -1381,7 +1458,12 @@ public abstract class SQLiteDatabaseTest<
             // now, have the writer do the select count(*)
             // it should execute on the same connection as this transaction
             // and count(*) should reflect the newly inserted row
-            Long l = DatabaseUtils.longForQuery(mDatabase, "select count(*) from t1", null);
+            Long l;
+            try {
+                l = mDatabaseUtils.longForQuery(mDatabase, "select count(*) from t1", null);
+            } catch (SQLiteDoneExceptionWrapper wrapped) {
+                throw new RuntimeException(wrapped);
+            }
             assertEquals(6, l.intValue());
 
             // end transaction
@@ -1404,17 +1486,22 @@ public abstract class SQLiteDatabaseTest<
             this.count = count;
         }
         @Override public void run() {
-            Long l = DatabaseUtils.longForQuery(mDatabase, "select count(*) from t1", null);
+            Long l;
+            try {
+                l = mDatabaseUtils.longForQuery(mDatabase, "select count(*) from t1", null);
+            } catch (SQLiteDoneExceptionWrapper wrapped) {
+                throw new RuntimeException(wrapped);
+            }
             assertEquals(count, l.intValue());
         }
     }
 
-    public void testExceptionsFromEnableWriteAheadLogging() {
+    public void testExceptionsFromEnableWriteAheadLogging() throws SQLExceptionWrapper {
         // attach a database
         // redo setup to create WAL enabled database
         mDatabase.close();
         new File(mDatabase.getPath()).delete();
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(mDatabaseFile.getPath(), null, null);
+        mDatabase = openOrCreateDatabaseWithNullErrorHandler(mDatabaseFile.getPath(), null);
 
         // attach a database and call enableWriteAheadLogging - should not be allowed
         mDatabase.execSQL("attach database ':memory:' as memoryDb");
@@ -1430,18 +1517,18 @@ public abstract class SQLiteDatabaseTest<
         db.close();
     }
 
-    public void testEnableThenDisableWriteAheadLogging() {
+    public void testEnableThenDisableWriteAheadLogging() throws SQLiteDoneExceptionWrapper {
         // Enable WAL.
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
         assertTrue(mDatabase.enableWriteAheadLogging());
         assertTrue(mDatabase.isWriteAheadLoggingEnabled());
-        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+        assertTrue(mDatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
                 .equalsIgnoreCase("WAL"));
 
         // Enabling when already enabled should have no observable effect.
         assertTrue(mDatabase.enableWriteAheadLogging());
         assertTrue(mDatabase.isWriteAheadLoggingEnabled());
-        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+        assertTrue(mDatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
                 .equalsIgnoreCase("WAL"));
 
         // Disabling when there are no connections should work.
@@ -1449,19 +1536,19 @@ public abstract class SQLiteDatabaseTest<
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
     }
 
-    public void testEnableThenDisableWriteAheadLoggingUsingOpenFlag() {
+    public void testEnableThenDisableWriteAheadLoggingUsingOpenFlag() throws SQLiteDoneExceptionWrapper {
         new File(mDatabase.getPath()).delete();
-        mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile.getPath(), null,
-                SQLiteDatabase.CREATE_IF_NECESSARY | SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING,
-                null);
+        mDatabase = openDatabaseWithNullErrorHandler(mDatabaseFile.getPath(), null,
+                mSQLiteDatabaseFlags.getCreateIfNecessary() | mSQLiteDatabaseFlags.getEnableWriteAheadLogging()
+                );
         assertTrue(mDatabase.isWriteAheadLoggingEnabled());
-        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+        assertTrue(mDatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
                 .equalsIgnoreCase("WAL"));
 
         // Enabling when already enabled should have no observable effect.
         assertTrue(mDatabase.enableWriteAheadLogging());
         assertTrue(mDatabase.isWriteAheadLoggingEnabled());
-        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+        assertTrue(mDatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
                 .equalsIgnoreCase("WAL"));
 
         // Disabling when there are no connections should work.
@@ -1474,7 +1561,7 @@ public abstract class SQLiteDatabaseTest<
         getContext().deleteDatabase(DATABASE_FILE_NAME);
 
         File f = getContext().getDatabasePath(DATABASE_FILE_NAME);
-        mDatabase = SQLiteDatabase.openOrCreateDatabase(f,null);
+        mDatabase = openOrCreateDatabase(f,null);
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
         mDatabase.close();
 
@@ -1486,9 +1573,9 @@ public abstract class SQLiteDatabaseTest<
         // mDatabase.close();
     }
 
-    public void testEnableWriteAheadLoggingShouldThrowIfTransactionInProgress() {
+    public void testEnableWriteAheadLoggingShouldThrowIfTransactionInProgress() throws SQLiteDoneExceptionWrapper {
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
-        String oldJournalMode = DatabaseUtils.stringForQuery(
+        String oldJournalMode = mDatabaseUtils.stringForQuery(
                 mDatabase, "PRAGMA journal_mode", null);
 
         // Begin transaction.
@@ -1498,16 +1585,16 @@ public abstract class SQLiteDatabaseTest<
             // Attempt to enable WAL should fail.
             mDatabase.enableWriteAheadLogging();
             fail("Expected IllegalStateException");
-        } catch (IllegalStateException ex) {
+        } catch (IllegalStateException ignored) {
             // expected
         }
 
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
-        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+        assertTrue(mDatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
                 .equalsIgnoreCase(oldJournalMode));
     }
 
-    public void testDisableWriteAheadLoggingShouldThrowIfTransactionInProgress() {
+    public void testDisableWriteAheadLoggingShouldThrowIfTransactionInProgress() throws SQLiteDoneExceptionWrapper {
         // Enable WAL.
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
         assertTrue(mDatabase.enableWriteAheadLogging());
@@ -1525,21 +1612,21 @@ public abstract class SQLiteDatabaseTest<
         }
 
         assertTrue(mDatabase.isWriteAheadLoggingEnabled());
-        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+        assertTrue(mDatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
                 .equalsIgnoreCase("WAL"));
     }
 
-    public void testEnableAndDisableForeignKeys() {
+    public void testEnableAndDisableForeignKeys() throws SQLiteDoneExceptionWrapper {
         // Initially off.
-        assertEquals(0, DatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
+        assertEquals(0, mDatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
 
         // Enable foreign keys.
         mDatabase.setForeignKeyConstraintsEnabled(true);
-        assertEquals(1, DatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
+        assertEquals(1, mDatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
 
         // Disable foreign keys.
         mDatabase.setForeignKeyConstraintsEnabled(false);
-        assertEquals(0, DatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
+        assertEquals(0, mDatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
 
         // Cannot configure foreign keys if there are transactions in progress.
         mDatabase.beginTransaction();
@@ -1549,11 +1636,11 @@ public abstract class SQLiteDatabaseTest<
         } catch (IllegalStateException ex) {
             // expected
         }
-        assertEquals(0, DatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
+        assertEquals(0, mDatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
         mDatabase.endTransaction();
 
         // Enable foreign keys should work again after transaction complete.
         mDatabase.setForeignKeyConstraintsEnabled(true);
-        assertEquals(1, DatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
+        assertEquals(1, mDatabaseUtils.longForQuery(mDatabase, "PRAGMA foreign_keys", null));
     }
 }

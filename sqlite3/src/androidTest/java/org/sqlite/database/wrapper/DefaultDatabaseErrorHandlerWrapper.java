@@ -1,7 +1,5 @@
 package org.sqlite.database.wrapper;
 
-import org.sqlite.database.sqlite.SQLiteDatabase;
-
 public interface DefaultDatabaseErrorHandlerWrapper<
         SQLiteDatabaseType,
         SQLiteStatementType,

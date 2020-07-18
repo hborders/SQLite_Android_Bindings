@@ -21,6 +21,8 @@ public interface SQLiteDatabaseWrapper<
 
     void close();
 
+    void releaseReference();
+
     void setLockingEnabled(boolean lockingEnabled);
     void beginTransaction();
     void beginTransactionNonExclusive();
@@ -52,7 +54,7 @@ public interface SQLiteDatabaseWrapper<
                  String selection, String[] selectionArgs, String groupBy,
                  String having, String orderBy, String limit,
                  CancellationSignal cancellationSignal);
-    Cursor queryWithFactory(
+    Cursor  queryWithFactory(
             CursorFactoryType cursorFactory,
             boolean distinct, String table, String[] columns,
             String selection, String[] selectionArgs, String groupBy,

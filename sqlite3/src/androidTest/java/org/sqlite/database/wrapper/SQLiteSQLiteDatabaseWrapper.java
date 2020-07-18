@@ -48,6 +48,11 @@ public final class SQLiteSQLiteDatabaseWrapper implements SQLiteDatabaseWrapper<
     }
 
     @Override
+    public void releaseReference() {
+        sqliteDatabase.releaseReference();
+    }
+
+    @Override
     public void setLockingEnabled(boolean lockingEnabled) {
         sqliteDatabase.setLockingEnabled(lockingEnabled);
     }
